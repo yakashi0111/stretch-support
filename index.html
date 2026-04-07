@@ -259,26 +259,32 @@
         circle.style.strokeDashoffset = circumference - ((remaining / currentTotal) * circumference);
         if (remaining > 0) { requestID = requestAnimationFrame(animate); } 
         else {
-    // 1. 現在のタイマーを停止・リセット
-    toggleTimer(); 
-    elapsedTime = 0; 
-    
-    // 2. 次の項目へインデックスを進める
-    currentIndex++;
+            cancelAnimationFrame(requestID);
+            isRunning = false; 
+            elapsedTime = 0;
+            const btn = document.getElementById('main-btn');
+            btn.innerText = "START";
+            btn.className = "btn-start";
 
-    // 3. 全項目終わっていなければ、インターバルをおいて次を開始
-    if (currentIndex < workoutQueue.length) {
-        updateUI();
-        setTimeout(() => {
-            if (!isRunning) toggleTimer(); // 自動で次のタイマーをスタート
-        }, 5000); // ← ここが「何秒後に開始するか」の調整箇所（ミリ秒単位）
-    } else {
-        // 全メニュー終了時の処理
-        currentIndex = 0;
-        updateUI();
-        alert("all done");
-    }
-}
+            currentIndex++;
+
+            if (currentIndex < workoutQueue.length) {
+                updateUI();
+                setTimeout(() => {
+                    if (!isRunning) {
+                        isRunning = true;
+                        btn.innerText = "STOP";
+                        btn.className = "btn-stop";
+                        startTime = performance.now();
+                        requestID = requestAnimationFrame(animate);
+                    }
+                }, 5000); 
+            } else {
+                currentIndex = 0;
+                updateUI();
+                alert("All Done!");
+            }
+        }
     }
 
     function toggleTimer() {

@@ -258,7 +258,27 @@
         document.getElementById('time-display').innerText = (remaining / 1000).toFixed(1);
         circle.style.strokeDashoffset = circumference - ((remaining / currentTotal) * circumference);
         if (remaining > 0) { requestID = requestAnimationFrame(animate); } 
-        else { toggleTimer(); elapsedTime = 0; currentIndex = (currentIndex + 1) % workoutQueue.length; updateUI(); }
+        else {
+    // 1. 現在のタイマーを停止・リセット
+    toggleTimer(); 
+    elapsedTime = 0; 
+    
+    // 2. 次の項目へインデックスを進める
+    currentIndex++;
+
+    // 3. 全項目終わっていなければ、インターバルをおいて次を開始
+    if (currentIndex < workoutQueue.length) {
+        updateUI();
+        setTimeout(() => {
+            if (!isRunning) toggleTimer(); // 自動で次のタイマーをスタート
+        }, 5000); // ← ここが「何秒後に開始するか」の調整箇所（ミリ秒単位）
+    } else {
+        // 全メニュー終了時の処理
+        currentIndex = 0;
+        updateUI();
+        alert("all done");
+    }
+}
     }
 
     function toggleTimer() {

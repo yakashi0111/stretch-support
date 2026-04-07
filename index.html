@@ -194,7 +194,7 @@
 </div>
 
 <script>
-    let rawStretches = [{ name: "前屈", time: 30, type: "both" }];
+    let rawStretches = [{ name: "ハム", time: 40, type: "both" }];
     let workoutQueue = [], currentIndex = 0, selectedSeconds = 30;
     let startTime, elapsedTime = 0, requestID, isRunning = false;
 
@@ -206,7 +206,7 @@
     // ドラムピッカー生成 (1秒刻み, 5〜180秒)
     const picker = document.getElementById('picker');
     const pickerList = document.getElementById('picker-list');
-    for (let i = 5; i <= 180; i++) {
+    for (let i = 1; i <= 180; i++) {
         const item = document.createElement('div');
         item.className = 'picker-item';
         item.innerText = i;

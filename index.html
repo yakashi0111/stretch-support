@@ -197,6 +197,19 @@
     let rawStretches = [{ name: "ハム", time: 40, type: "both" }];
     let workoutQueue = [], currentIndex = 0, selectedSeconds = 30;
     let startTime, elapsedTime = 0, requestID, isRunning = false;
+    // マウス位置から「どの要素の隙間にいるか」を計算する関数
+    function getDragAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll('.list-item:not(.dragging)')];
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            if (offset < 0 && offset > closest.offset) {
+                return { offset: offset, element: child };
+            } else {
+                return closest;
+            }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
 
     const circle = document.getElementById('progress-bar');
     const radius = circle.r.baseVal.value;
@@ -300,25 +313,45 @@
         }
     }
 
-    function renderList() {
+   function renderList() {
         const listDiv = document.getElementById('item-list');
         listDiv.innerHTML = '';
         rawStretches.forEach((s, i) => {
             const item = document.createElement('div');
-            item.className = 'list-item'; item.draggable = true; item.dataset.index = i;
+            item.className = 'list-item'; 
+            item.draggable = true; 
+            item.dataset.index = i;
             item.innerHTML = `<div class="handle">≡</div><div class="item-info"><strong>${s.name}</strong> (${s.time}s)</div><button class="remove-btn" onclick="removeItem(${i})">✕</button>`;
+            
+            // ドラッグ開始時の処理
             item.addEventListener('dragstart', () => item.classList.add('dragging'));
-            item.addEventListener('dragend', () => { item.classList.remove('dragging'); saveNewOrder(); });
+            
+            // ドラッグ終了（指を離した）時の処理
+            item.addEventListener('dragend', () => { 
+                item.classList.remove('dragging'); 
+                saveNewOrder(); 
+            });
+            
             listDiv.appendChild(item);
         });
-        listDiv.addEventListener('dragover', e => {
-            e.preventDefault();
+
+        // リストの上をドラッグしている間の動き（手順1の関数を使用）
+        listDiv.ondragover = (e) => {
+            e.preventDefault(); // これがないとドロップできません
             const draggingItem = document.querySelector('.dragging');
-            const siblings = [...listDiv.querySelectorAll('.list-item:not(.dragging)')];
-            let nextSibling = siblings.find(sibling => e.clientY <= sibling.offsetTop + sibling.offsetHeight / 2);
-            listDiv.insertBefore(draggingItem, nextSibling);
-        });
-        buildQueue(); updateUI();
+            const afterElement = getDragAfterElement(listDiv, e.clientY);
+            
+            if (afterElement == null) {
+                // 一番下に持ってきた場合
+                listDiv.appendChild(draggingItem);
+            } else {
+                // 特定の項目の上に持ってきた場合、その前に差し込む
+                listDiv.insertBefore(draggingItem, afterElement);
+            }
+        };
+
+        buildQueue(); 
+        updateUI();
     }
 
     function saveNewOrder() {

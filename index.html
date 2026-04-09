@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fixed Drum Picker Timer</title>
+    <title>Stretch Tool Custom</title>
     <style>
         :root {
             --primary-color: #2ecc71;
@@ -26,7 +26,6 @@
             overflow: hidden;
         }
 
-        /* 巨大タイマーエリア（元のデザインを復元） */
         .timer-container {
             position: relative;
             display: flex;
@@ -34,8 +33,8 @@
             align-items: center;
             width: 85vw;
             height: 85vw;
-            max-width: 550px;
-            max-height: 550px;
+            max-width: 500px;
+            max-height: 500px;
         }
 
         .timer-svg {
@@ -69,7 +68,6 @@
         #time-display {
             font-size: clamp(4.5rem, 18vw, 9rem);
             font-weight: 100;
-            font-variant-numeric: tabular-nums;
             margin-bottom: 20px;
         }
 
@@ -81,23 +79,18 @@
             cursor: pointer;
             font-weight: bold;
             color: white;
-            transition: 0.3s;
             width: 160px;
         }
         .btn-start { background: var(--primary-color); }
         .btn-stop { background: var(--stop-color); }
 
-        /* 設定ボタン（中央の歯車アイコン） */
         .settings-trigger {
             margin-top: 30px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 10px;
+            background: none; border: none; cursor: pointer;
+            z-index: 50;
         }
         .settings-trigger svg { fill: #444; width: 36px; height: 36px; }
 
-        /* 設定パネル */
         .settings-panel {
             display: none;
             position: fixed;
@@ -105,17 +98,15 @@
             background: rgba(0,0,0,0.98);
             z-index: 100;
             overflow-y: auto;
-            padding: 40px 20px;
+            padding: 20px;
             box-sizing: border-box;
         }
         .settings-panel.open { display: block; }
-        .settings-content { max-width: 450px; margin: 0 auto; }
 
-        /* iPhone風ドラムピッカー（1秒刻み） */
+        /* 秒数ピッカーの修正 */
         .picker-container {
-            position: relative; height: 150px; width: 120px; margin: 20px auto;
+            position: relative; height: 150px; width: 100px; margin: 10px auto;
             overflow-y: scroll; scroll-snap-type: y mandatory;
-            scrollbar-width: none;
             mask-image: linear-gradient(0deg, transparent, black 40%, black 60%, transparent);
             -webkit-mask-image: linear-gradient(0deg, transparent, black 40%, black 60%, transparent);
         }
@@ -123,36 +114,22 @@
         .picker-list { padding: 50px 0; }
         .picker-item {
             height: 50px; display: flex; align-items: center; justify-content: center;
-            font-size: 1.8rem; font-weight: bold; scroll-snap-align: center; color: #444;
+            font-size: 1.8rem; scroll-snap-align: center; color: #444;
         }
-        .picker-item.selected { color: var(--accent-color); font-size: 2.2rem; }
-        .picker-highlight {
-            position: absolute; top: 50px; left: 0; right: 0; height: 50px;
-            border-top: 1px solid #333; border-bottom: 1px solid #333; pointer-events: none;
-        }
+        .picker-item.selected { color: var(--accent-color); font-size: 2.2rem; font-weight: bold; }
 
-        .input-group { display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px; }
+        .input-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; max-width: 400px; margin: 0 auto 20px auto;}
         input, select {
-            background: #111; border: 1px solid #333; color: white;
-            padding: 15px; border-radius: 8px; font-size: 1rem;
+            background: #111; border: 1px solid #333; color: white; padding: 12px; border-radius: 8px; font-size: 1rem;
         }
 
-        /* リスト表示 */
         .list-item {
-            display: flex; align-items: center;
-            background: #111; margin-bottom: 10px;
-            padding: 15px; border-radius: 8px;
-            cursor: grab;
+            display: flex; align-items: center; background: #111; margin-bottom: 8px;
+            padding: 12px; border-radius: 8px; cursor: grab; max-width: 400px; margin: 0 auto 8px auto;
         }
-        .list-item.dragging { opacity: 0.5; }
-        .handle { color: #444; margin-right: 15px; font-size: 1.2rem; }
-        .item-info { flex-grow: 1; }
-        .remove-btn { color: var(--stop-color); border: none; background: none; font-size: 1.5rem; cursor: pointer; }
-
-        .close-settings {
-            width: 100%; padding: 15px; margin-top: 30px;
-            background: #222; color: white; border: none; border-radius: 8px; font-weight: bold;
-        }
+        .list-item.dragging { opacity: 0.3; }
+        .item-info { flex-grow: 1; margin-left: 10px; }
+        .remove-btn { color: var(--stop-color); border: none; background: none; font-size: 1.2rem; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -174,89 +151,80 @@
 </button>
 
 <div class="settings-panel" id="panel">
-    <div class="settings-content">
-        <h2>メニュー編集</h2>
+    <div style="max-width: 450px; margin: 0 auto;">
+        <h2 style="text-align:center;">MENU</h2>
         <div class="picker-container" id="picker">
-            <div class="picker-highlight"></div>
             <div class="picker-list" id="picker-list"></div>
         </div>
         <div class="input-group">
-            <input type="text" id="new-name" placeholder="項目名を入力">
+            <input type="text" id="new-name" placeholder="種目名">
             <select id="side-type">
-                <option value="both">両方同時（1セット）</option>
-                <option value="single">左右交互（2セット）</option>
+                <option value="both">1セット (両方)</option>
+                <option value="single">2セット (左右交互)</option>
             </select>
-            <button id="add-btn" style="background: var(--accent-color); color: white; padding: 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">リストに追加</button>
+            <button id="add-btn" style="background: var(--accent-color); color: white; padding: 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">追加</button>
         </div>
         <div id="item-list"></div>
-        <button class="close-settings" id="close-settings">閉じる</button>
+        <button id="close-settings" style="width: 100%; padding: 15px; margin-top: 20px; background: #333; color: white; border: none; border-radius: 8px; cursor: pointer;">閉じる</button>
     </div>
 </div>
 
 <script>
-    let rawStretches = [{ name: "ハム", time: 40, type: "both" }];
-    let workoutQueue = [], currentIndex = 0, selectedSeconds = 30;
-    let startTime, elapsedTime = 0, requestID, isRunning = false;
-    // マウス位置から「どの要素の隙間にいるか」を計算する関数
-    function getDragAfterElement(container, y) {
-        const draggableElements = [...container.querySelectorAll('.list-item:not(.dragging)')];
-        return draggableElements.reduce((closest, child) => {
-            const box = child.getBoundingClientRect();
-            const offset = y - box.top - box.height / 2;
-            if (offset < 0 && offset > closest.offset) {
-                return { offset: offset, element: child };
-            } else {
-                return closest;
-            }
-        }, { offset: Number.NEGATIVE_INFINITY }).element;
-    }
+    let rawStretches = JSON.parse(localStorage.getItem('stretch_data')) || [{ name: "ハム", time: 30, type: "both" }];
+    let workoutQueue = [];
+    let currentIndex = 0;
+    let selectedSeconds = 30;
+    let isRunning = false;
+    let startTime, elapsedTime = 0, requestID;
 
     const circle = document.getElementById('progress-bar');
     const radius = circle.r.baseVal.value;
     const circumference = 2 * Math.PI * radius;
     circle.style.strokeDasharray = `${circumference} ${circumference}`;
 
-    // ドラムピッカー生成 (1秒刻み, 5〜180秒)
+    // --- 1秒刻みのピッカー生成 ---
     const picker = document.getElementById('picker');
     const pickerList = document.getElementById('picker-list');
-    for (let i = 1; i <= 180; i++) {
+    for (let i = 1; i <= 300; i++) {
         const item = document.createElement('div');
         item.className = 'picker-item';
-        item.innerText = i;
+        item.innerText = i; // 's'を削除
         item.dataset.sec = i;
         pickerList.appendChild(item);
     }
-
-    picker.addEventListener('scroll', () => {
+    picker.onscroll = () => {
         const items = document.querySelectorAll('.picker-item');
-        let closest = null;
-        let minDiff = Infinity;
+        const center = picker.getBoundingClientRect().top + picker.clientHeight / 2;
         items.forEach(item => {
-            const rect = item.getBoundingClientRect();
-            const centerDiff = Math.abs(rect.top + rect.height/2 - (picker.getBoundingClientRect().top + picker.clientHeight/2));
-            item.classList.remove('selected');
-            if (centerDiff < minDiff) { minDiff = centerDiff; closest = item; }
+            const itemCenter = item.getBoundingClientRect().top + item.clientHeight / 2;
+            if (Math.abs(center - itemCenter) < 25) {
+                items.forEach(i => i.classList.remove('selected'));
+                item.classList.add('selected');
+                selectedSeconds = parseInt(item.dataset.sec);
+            }
         });
-        if (closest) {
-            closest.classList.add('selected');
-            selectedSeconds = parseInt(closest.dataset.sec);
-        }
-    });
-
-    setTimeout(() => picker.scrollTop = (30 - 5) * 50, 100);
+    };
+    // 初期値を30秒にセット
+    setTimeout(() => picker.scrollTop = (30 - 1) * 50, 100);
 
     function buildQueue() {
         workoutQueue = [];
         rawStretches.forEach(s => {
             if (s.type === "single") {
-                workoutQueue.push({ ...s, name: s.name + " (左)" });
-                workoutQueue.push({ ...s, name: s.name + " (右)" });
-            } else { workoutQueue.push(s); }
+                workoutQueue.push({ name: s.name + " (左)", time: s.time });
+                workoutQueue.push({ name: s.name + " (右)", time: s.time });
+            } else {
+                workoutQueue.push({ name: s.name, time: s.time });
+            }
         });
     }
 
     function updateUI() {
-        if (workoutQueue.length === 0) { document.getElementById('current-title').innerText = "メニューなし"; return; }
+        if (workoutQueue.length === 0) {
+            document.getElementById('current-title').innerText = "NO MENU";
+            document.getElementById('time-display').innerText = "0.0";
+            return;
+        }
         const current = workoutQueue[currentIndex];
         document.getElementById('current-title').innerText = current.name;
         document.getElementById('time-display').innerText = current.time.toFixed(1);
@@ -268,108 +236,136 @@
         const now = performance.now();
         const delta = now - startTime + elapsedTime;
         const remaining = Math.max(0, currentTotal - delta);
+
         document.getElementById('time-display').innerText = (remaining / 1000).toFixed(1);
         circle.style.strokeDashoffset = circumference - ((remaining / currentTotal) * circumference);
-        if (remaining > 0) { requestID = requestAnimationFrame(animate); } 
-        else {
-            cancelAnimationFrame(requestID);
-            isRunning = false; 
-            elapsedTime = 0;
-            const btn = document.getElementById('main-btn');
-            btn.innerText = "START";
-            btn.className = "btn-start";
 
-            currentIndex++;
-
-            if (currentIndex < workoutQueue.length) {
-                updateUI();
-                setTimeout(() => {
-                    if (!isRunning) {
-                        isRunning = true;
-                        btn.innerText = "STOP";
-                        btn.className = "btn-stop";
-                        startTime = performance.now();
-                        requestID = requestAnimationFrame(animate);
-                    }
-                }, 5000); 
-            } else {
-                currentIndex = 0;
-                updateUI();
-               document.getElementById('current-title').innerText = "FINISH!";
-                document.getElementById('time-display').innerText = "";
-            }
+        if (remaining > 0) {
+            requestID = requestAnimationFrame(animate);
+        } else {
+            nextStep();
         }
+    }
+
+    function nextStep() {
+        cancelAnimationFrame(requestID);
+        elapsedTime = 0;
+        currentIndex++;
+
+        if (currentIndex < workoutQueue.length) {
+            updateUI();
+            setTimeout(() => {
+                if (isRunning) {
+                    startTime = performance.now();
+                    requestID = requestAnimationFrame(animate);
+                }
+            }, 5000); 
+        } else {
+            finishWorkout();
+        }
+    }
+
+    function finishWorkout() {
+        isRunning = false;
+        currentIndex = 0;
+        document.getElementById('main-btn').innerText = "START";
+        document.getElementById('main-btn').className = "btn-start";
+        document.getElementById('current-title').innerText = "FINISH!";
+        document.getElementById('time-display').innerText = "0.0";
+        circle.style.strokeDashoffset = 0;
     }
 
     function toggleTimer() {
+        if (workoutQueue.length === 0) return;
         const btn = document.getElementById('main-btn');
         if (!isRunning) {
-            if (workoutQueue.length === 0) return;
-            isRunning = true; btn.innerText = "STOP"; btn.className = "btn-stop";
-            startTime = performance.now(); requestID = requestAnimationFrame(animate);
+            isRunning = true;
+            btn.innerText = "STOP"; btn.className = "btn-stop";
+            startTime = performance.now();
+            requestID = requestAnimationFrame(animate);
         } else {
-            isRunning = false; btn.innerText = "START"; btn.className = "btn-start";
-            cancelAnimationFrame(requestID); elapsedTime += performance.now() - startTime;
+            isRunning = false;
+            btn.innerText = "START"; btn.className = "btn-start";
+            cancelAnimationFrame(requestID);
+            elapsedTime += performance.now() - startTime;
         }
     }
 
-   function renderList() {
+    function renderList() {
         const listDiv = document.getElementById('item-list');
         listDiv.innerHTML = '';
         rawStretches.forEach((s, i) => {
             const item = document.createElement('div');
-            item.className = 'list-item'; 
-            item.draggable = true; 
-            item.dataset.index = i;
-            item.innerHTML = `<div class="handle">≡</div><div class="item-info"><strong>${s.name}</strong> (${s.time}s)</div><button class="remove-btn" onclick="removeItem(${i})">✕</button>`;
+            item.className = 'list-item';
+            item.draggable = true;
+            item.dataset.name = s.name;
+            item.dataset.time = s.time;
+            item.dataset.type = s.type;
             
-            // ドラッグ開始時の処理
+            item.innerHTML = `
+                <div class="handle">≡</div>
+                <div class="item-info"><strong>${s.name}</strong> (${s.time}秒)</div>
+                <button class="remove-btn">✕</button>
+            `;
+            
+            item.querySelector('.remove-btn').onclick = () => removeItem(i);
             item.addEventListener('dragstart', () => item.classList.add('dragging'));
-            
-            // ドラッグ終了（指を離した）時の処理
-            item.addEventListener('dragend', () => { 
-                item.classList.remove('dragging'); 
-                saveNewOrder(); 
+            item.addEventListener('dragend', () => {
+                item.classList.remove('dragging');
+                saveOrder();
             });
-            
             listDiv.appendChild(item);
         });
 
-        // リストの上をドラッグしている間の動き（手順1の関数を使用）
-        listDiv.ondragover = (e) => {
-            e.preventDefault(); // これがないとドロップできません
+        listDiv.ondragover = e => {
+            e.preventDefault();
             const draggingItem = document.querySelector('.dragging');
-            const afterElement = getDragAfterElement(listDiv, e.clientY);
-            
-            if (afterElement == null) {
-                // 一番下に持ってきた場合
-                listDiv.appendChild(draggingItem);
-            } else {
-                // 特定の項目の上に持ってきた場合、その前に差し込む
-                listDiv.insertBefore(draggingItem, afterElement);
-            }
+            const siblings = [...listDiv.querySelectorAll('.list-item:not(.dragging)')];
+            const nextSibling = siblings.find(sibling => e.clientY <= sibling.getBoundingClientRect().top + sibling.getBoundingClientRect().height / 2);
+            listDiv.insertBefore(draggingItem, nextSibling);
         };
-
-        buildQueue(); 
+        
+        localStorage.setItem('stretch_data', JSON.stringify(rawStretches));
+        buildQueue();
         updateUI();
     }
 
-    function saveNewOrder() {
-        const newList = [];
-        document.querySelectorAll('.list-item').forEach(item => newList.push(rawStretches[item.dataset.index]));
-        rawStretches = newList; renderList();
+    function saveOrder() {
+        const items = [...document.querySelectorAll('.list-item')];
+        rawStretches = items.map(item => ({
+            name: item.dataset.name,
+            time: parseInt(item.dataset.time),
+            type: item.dataset.type
+        }));
+        renderList();
     }
 
-    function removeItem(i) { rawStretches.splice(i, 1); renderList(); }
+    function removeItem(i) {
+        rawStretches.splice(i, 1);
+        renderList();
+    }
 
-    document.getElementById('add-btn').addEventListener('click', () => {
-        const nameInput = document.getElementById('new-name');
-        if (nameInput.value) {
-            rawStretches.push({ name: nameInput.value, time: selectedSeconds, type: document.getElementById('side-type').value });
-            nameInput.value = ''; renderList();
+   // エンターキー入力への対応
+    document.getElementById('new-name').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('add-btn').click();
         }
     });
 
+    // 追加ボタンの処理（中身は同じですがセットで貼り直すと確実です）
+    document.getElementById('add-btn').onclick = () => {
+        const nameInput = document.getElementById('new-name');
+        if (nameInput.value) {
+            rawStretches.push({ 
+                name: nameInput.value, 
+                time: selectedSeconds, 
+                type: document.getElementById('side-type').value 
+            });
+            nameInput.value = '';
+            renderList();
+        }
+    };
     document.getElementById('open-settings').onclick = () => document.getElementById('panel').classList.add('open');
     document.getElementById('close-settings').onclick = () => document.getElementById('panel').classList.remove('open');
     document.getElementById('main-btn').onclick = toggleTimer;

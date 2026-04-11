@@ -393,25 +393,40 @@
             nameInput.value = ''; renderList();
         }
     };
-   const waitInput = document.getElementById('wait-sec-input');
+  // --- 修正版：エラーを回避する書き方 ---
+    const waitInput = document.getElementById('wait-sec-input');
     const waitDisplay = document.getElementById('wait-val-display');
 
-    // スライダーを動かしている最中に数字をリアルタイム更新
-    waitInput.oninput = (e) => {
-        const val = e.target.value;
-        waitDisplay.innerText = val;
-        waitTime = parseInt(val) || 0;
-        localStorage.setItem('wait_time', waitTime);
-    };
+    // スライダーが存在する場合のみ処理を実行する（エラー回避ガード）
+    if (waitInput && waitDisplay) {
+        waitInput.oninput = (e) => {
+            const val = e.target.value;
+            waitDisplay.innerText = val;
+            waitTime = parseInt(val) || 0;
+            localStorage.setItem('wait_time', waitTime);
+        };
+        // 初期値をセット
+        waitInput.value = waitTime;
+        waitDisplay.innerText = waitTime;
+    }
 
-    document.getElementById('open-settings').onclick = () => document.getElementById('panel').classList.add('open');
-    document.getElementById('close-settings').onclick = () => document.getElementById('panel').classList.remove('open');
-    document.getElementById('main-btn').onclick = toggleTimer;
-    document.getElementById('prev-btn').onclick = prevStep;
+    // 設定画面を開く・閉じるボタンの処理
+    const openBtn = document.getElementById('open-settings');
+    const closeBtn = document.getElementById('close-settings');
+    const panel = document.getElementById('panel');
 
-    // 初期値をスライダーと表示用テキストの両方にセット
-    waitInput.value = waitTime;
-    if(waitDisplay) waitDisplay.innerText = waitTime;
+    if (openBtn && panel) {
+        openBtn.onclick = () => panel.classList.add('open');
+    }
+    if (closeBtn && panel) {
+        closeBtn.onclick = () => panel.classList.remove('open');
+    }
+
+    // メインボタンと戻るボタン
+    const mainBtn = document.getElementById('main-btn');
+    const prevBtn = document.getElementById('prev-btn');
+    if (mainBtn) mainBtn.onclick = toggleTimer;
+    if (prevBtn) prevBtn.onclick = prevStep;
 
     renderList();
 </script>

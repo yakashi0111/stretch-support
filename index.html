@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stretch Tool Custom</title>
+    <title>Stretch Tool</title>
     <style>
         :root {
             --primary-color: #2ecc71;
@@ -11,6 +11,7 @@
             --bg-color: #000000;
             --text-color: #ffffff;
             --accent-color: #3498db;
+            --wait-color: #f1c40f;
         }
 
         body {
@@ -63,31 +64,52 @@
             margin-bottom: 5px;
             color: #aaa;
             font-weight: 300;
+            height: 1.2em;
         }
 
+        /* 修正: 数字の幅を固定してガタつきを防止 */
         #time-display {
             font-size: clamp(4.5rem, 18vw, 9rem);
             font-weight: 100;
             margin-bottom: 20px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
         }
 
         #main-btn {
-            padding: 15px 45px;
+            padding: 15px 40px;
             font-size: 1.2rem;
             border: none;
             border-radius: 50px;
             cursor: pointer;
             font-weight: bold;
             color: white;
-            width: 160px;
+            width: 140px;
         }
+
+        /* 戻るボタンのデザイン */
+        #prev-btn {
+            background: #333;
+            padding: 15px 25px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            color: white;
+        }
+
         .btn-start { background: var(--primary-color); }
         .btn-stop { background: var(--stop-color); }
 
         .settings-trigger {
             margin-top: 30px;
             background: none; border: none; cursor: pointer;
-            z-index: 50;
         }
         .settings-trigger svg { fill: #444; width: 36px; height: 36px; }
 
@@ -103,7 +125,10 @@
         }
         .settings-panel.open { display: block; }
 
-        /* 秒数ピッカーの修正 */
+        .wait-setting {
+            text-align: center; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 20px;
+        }
+
         .picker-container {
             position: relative; height: 150px; width: 100px; margin: 10px auto;
             overflow-y: scroll; scroll-snap-type: y mandatory;
@@ -127,7 +152,6 @@
             display: flex; align-items: center; background: #111; margin-bottom: 8px;
             padding: 12px; border-radius: 8px; cursor: grab; max-width: 400px; margin: 0 auto 8px auto;
         }
-        .list-item.dragging { opacity: 0.3; }
         .item-info { flex-grow: 1; margin-left: 10px; }
         .remove-btn { color: var(--stop-color); border: none; background: none; font-size: 1.2rem; cursor: pointer; }
     </style>
@@ -142,8 +166,10 @@
     <div class="inner-ui">
         <h1 id="current-title">Ready</h1>
         <div id="time-display">0.0</div>
-        <button id="prev-btn" style="background: #333; margin-right: 10px; border-radius: 50px; padding: 15px 25px; color: white; border: none; cursor: pointer; font-weight: bold;">PREV</button>
-        <button id="main-btn" class="btn-start">START</button>
+        <div class="controls">
+            <button id="prev-btn">PREV</button>
+            <button id="main-btn" class="btn-start">START</button>
+        </div>
     </div>
 </div>
 
@@ -154,10 +180,12 @@
 <div class="settings-panel" id="panel">
     <div style="max-width: 450px; margin: 0 auto;">
         <h2 style="text-align:center;">MENU</h2>
-        <div style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 20px;">
-    <p style="margin-bottom: 10px; color: #aaa;">種目間の待機時間 (秒)</p>
-    <input type="number" id="wait-sec-input" value="5" min="0" max="60" style="width: 80px; text-align: center; font-size: 1.2rem; background: #222; border: 1px solid #444; color: white; padding: 10px; border-radius: 8px;">
-</div>
+        
+        <div class="wait-setting">
+            <p style="color: #aaa;">待機時間 (秒)</p>
+            <input type="number" id="wait-sec-input" min="0" max="60" style="width: 60px; text-align: center;">
+        </div>
+
         <div class="picker-container" id="picker">
             <div class="picker-list" id="picker-list"></div>
         </div>
@@ -175,7 +203,7 @@
 </div>
 
 <script>
-  // --- 状態管理 ---
+    // --- 状態管理 ---
     let rawStretches = JSON.parse(localStorage.getItem('stretch_data')) || [{ name: "ハム", time: 30, type: "both" }];
     let waitTime = parseInt(localStorage.getItem('wait_time')) || 5;
     let workoutQueue = [];
@@ -190,10 +218,7 @@
     const circumference = 2 * Math.PI * radius;
     circle.style.strokeDasharray = `${circumference} ${circumference}`;
 
-    // 数字のガタつき防止をコードから強制適用
-    document.getElementById('time-display').style.fontVariantNumeric = 'tabular-nums';
-
-    // --- ピッカー初期化 ---
+    // --- ピッカー初期化 (1秒刻み・sなし) ---
     const picker = document.getElementById('picker');
     const pickerList = document.getElementById('picker-list');
     for (let i = 1; i <= 300; i++) {
@@ -230,19 +255,15 @@
     }
 
     function updateUI() {
-        if (workoutQueue.length === 0) {
-            document.getElementById('current-title').innerText = "NO MENU";
-            return;
-        }
+        if (workoutQueue.length === 0) return;
         const current = workoutQueue[currentIndex];
         document.getElementById('current-title').innerText = isWaiting ? "NEXT: " + current.name : current.name;
+        circle.style.stroke = isWaiting ? "var(--wait-color)" : "var(--primary-color)";
         
-        const totalLimit = isWaiting ? waitTime : current.time;
-        const displayTime = Math.max(0, totalLimit - (elapsedTime / 1000));
+        const total = isWaiting ? waitTime * 1000 : current.time * 1000;
+        const displayTime = Math.max(0, (total - elapsedTime) / 1000);
         document.getElementById('time-display').innerText = displayTime.toFixed(1);
-        
-        circle.style.stroke = isWaiting ? "#f1c40f" : "#2ecc71";
-        circle.style.strokeDashoffset = circumference - ((displayTime / totalLimit) * circumference);
+        circle.style.strokeDashoffset = circumference - ((displayTime * 1000 / total) * circumference);
     }
 
     function animate(timestamp) {
@@ -268,19 +289,17 @@
 
     function startStep() {
         cancelAnimationFrame(requestID);
-        elapsedTime = 0;
-        startTime = null;
+        elapsedTime = 0; startTime = null;
         updateUI();
         if (isRunning) requestID = requestAnimationFrame(animate);
     }
 
     function nextStep() {
         cancelAnimationFrame(requestID);
-        elapsedTime = 0;
-        startTime = null;
+        elapsedTime = 0; startTime = null;
         currentIndex++;
         if (currentIndex < workoutQueue.length) {
-            isWaiting = true;
+            isWaiting = waitTime > 0;
             startStep();
         } else {
             finishWorkout();
@@ -289,8 +308,7 @@
 
     function prevStep() {
         cancelAnimationFrame(requestID);
-        elapsedTime = 0;
-        startTime = null;
+        elapsedTime = 0; startTime = null;
         isWaiting = false;
         if (currentIndex > 0) currentIndex--;
         updateUI();
@@ -298,13 +316,12 @@
     }
 
     function finishWorkout() {
-        isRunning = false;
-        isWaiting = false;
-        currentIndex = 0;
+        isRunning = false; isWaiting = false; currentIndex = 0;
         const btn = document.getElementById('main-btn');
         btn.innerText = "START"; btn.className = "btn-start";
         document.getElementById('current-title').innerText = "FINISH!";
         circle.style.strokeDashoffset = 0;
+        circle.style.stroke = "var(--primary-color)";
     }
 
     function toggleTimer() {
@@ -330,9 +347,7 @@
             const item = document.createElement('div');
             item.className = 'list-item';
             item.draggable = true;
-            item.dataset.name = s.name;
-            item.dataset.time = s.time;
-            item.dataset.type = s.type;
+            item.dataset.name = s.name; item.dataset.time = s.time; item.dataset.type = s.type;
             item.innerHTML = `<div class="handle">≡</div><div class="item-info"><strong>${s.name}</strong> (${s.time}秒)</div><button class="remove-btn">✕</button>`;
             item.querySelector('.remove-btn').onclick = () => { rawStretches.splice(i, 1); renderList(); };
             item.addEventListener('dragstart', () => item.classList.add('dragging'));
@@ -340,14 +355,6 @@
                 item.classList.remove('dragging');
                 const items = [...document.querySelectorAll('.list-item')];
                 rawStretches = items.map(el => ({ name: el.dataset.name, time: parseInt(el.dataset.time), type: el.dataset.type }));
-                // 待機時間が変更されたら保存する
-document.getElementById('wait-sec-input').onchange = (e) => {
-    waitTime = parseInt(e.target.value) || 0;
-    localStorage.setItem('wait_time', waitTime);
-};
-
-// 起動時に入力欄へ現在の値をセットする
-document.getElementById('wait-sec-input').value = waitTime;
                 renderList();
             });
             listDiv.appendChild(item);
@@ -357,7 +364,8 @@ document.getElementById('wait-sec-input').value = waitTime;
         if (!isRunning) updateUI();
     }
 
-    document.getElementById('new-name').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('add-btn').click(); });
+    // イベント
+    document.getElementById('new-name').onkeypress = (e) => { if (e.key === 'Enter') document.getElementById('add-btn').click(); };
     document.getElementById('add-btn').onclick = () => {
         const nameInput = document.getElementById('new-name');
         if (nameInput.value) {
@@ -365,12 +373,16 @@ document.getElementById('wait-sec-input').value = waitTime;
             nameInput.value = ''; renderList();
         }
     };
-
+    document.getElementById('wait-sec-input').onchange = (e) => {
+        waitTime = parseInt(e.target.value) || 0;
+        localStorage.setItem('wait_time', waitTime);
+    };
     document.getElementById('open-settings').onclick = () => document.getElementById('panel').classList.add('open');
     document.getElementById('close-settings').onclick = () => document.getElementById('panel').classList.remove('open');
     document.getElementById('main-btn').onclick = toggleTimer;
     document.getElementById('prev-btn').onclick = prevStep;
 
+    document.getElementById('wait-sec-input').value = waitTime;
     renderList();
 </script>
 </body>

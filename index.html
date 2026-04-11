@@ -67,7 +67,6 @@
             height: 1.2em;
         }
 
-        /* 修正: 数字の幅を固定してガタつきを防止 */
         #time-display {
             font-size: clamp(4.5rem, 18vw, 9rem);
             font-weight: 100;
@@ -92,7 +91,6 @@
             width: 140px;
         }
 
-        /* 戻るボタンのデザイン */
         #prev-btn {
             background: #333;
             padding: 15px 25px;
@@ -126,7 +124,24 @@
         .settings-panel.open { display: block; }
 
         .wait-setting {
-            text-align: center; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 20px;
+            text-align: center; 
+            margin-bottom: 20px; 
+            border-bottom: 1px solid #333; 
+            padding-bottom: 20px;
+        }
+
+        .wait-setting .label {
+            color: #666;
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+        }
+
+        .slider-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
         }
 
         .picker-container {
@@ -144,7 +159,7 @@
         .picker-item.selected { color: var(--accent-color); font-size: 2.2rem; font-weight: bold; }
 
         .input-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; max-width: 400px; margin: 0 auto 20px auto;}
-        input, select {
+        input:not([type="range"]), select {
             background: #111; border: 1px solid #333; color: white; padding: 12px; border-radius: 8px; font-size: 1rem;
         }
 
@@ -154,16 +169,26 @@
         }
         .item-info { flex-grow: 1; margin-left: 10px; }
         .remove-btn { color: var(--stop-color); border: none; background: none; font-size: 1.2rem; cursor: pointer; }
-    /* スライダー（バー）の見た目 */
+
+        /* スライダー（バー）の見た目 */
         input[type="range"] {
             -webkit-appearance: none;
+            appearance: none;
+            width: 200px;
+            height: 4px;
+            background: transparent;
+            outline: none;
+        }
+
+        /* Chrome/Safari用：バー本体のスタイル */
+        input[type="range"]::-webkit-slider-runnable-track {
             width: 100%;
             height: 4px;
             background: #333;
             border-radius: 2px;
-            outline: none;
         }
-        /* スライダーのつまみ（丸い点） */
+
+        /* つまみ（丸い部分）のデザイン - Chrome/Safari */
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
             width: 20px;
@@ -172,6 +197,54 @@
             border-radius: 50%;
             cursor: pointer;
             box-shadow: 0 0 10px rgba(46, 204, 113, 0.4);
+            transition: transform 0.1s;
+            margin-top: -8px;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:active {
+            transform: scale(1.3);
+        }
+
+        /* Firefox用：バー本体のスタイル */
+        input[type="range"]::-moz-range-track {
+            width: 100%;
+            height: 4px;
+            background: #333;
+            border-radius: 2px;
+        }
+
+        /* つまみ（丸い部分）のデザイン - Firefox */
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 10px rgba(46, 204, 113, 0.4);
+            transition: transform 0.1s;
+        }
+
+        input[type="range"]::-moz-range-thumb:active {
+            transform: scale(1.3);
+        }
+
+        /* 数字の表示スタイル */
+        .value-display {
+            min-width: 60px;
+            text-align: left;
+        }
+
+        #wait-val-display {
+            font-size: 2.5rem;
+            font-weight: 200;
+            color: var(--primary-color);
+        }
+
+        .value-display .unit {
+            color: #666;
+            font-size: 1rem;
+            margin-left: 5px;
         }
     </style>
 </head>
@@ -201,21 +274,32 @@
         <h2 style="text-align:center;">MENU</h2>
         
         <div class="wait-setting">
-    <p style="color: #666; font-size: 0.8rem; margin-bottom: 15px; letter-spacing: 2px;">INTERVAL TIME</p>
-    <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
-        <input type="range" id="wait-sec-input" min="0" max="30">
-        <div style="min-width: 50px; text-align: left;">
-            <span id="wait-val-display" style="font-size: 1.8rem; font-weight: 200; color: var(--primary-color); font-variant-numeric: tabular-nums;">5</span><span style="font-size: 0.8rem; color: #666; margin-left: 2px;">s</span>
+            <p class="label">INTERVAL TIME</p>
+            <div class="slider-wrapper">
+                <input type="range" id="wait-sec-input" min="0" max="30" value="5">
+                <div class="value-display">
+                    <span id="wait-val-display">5</span><span class="unit">s</span>
+                </div>
+            </div>
         </div>
-    </div>
-</div>
-        <div class="input-group">
-            <input type="text" id="new-name" placeholder="種目名">
-            <select id="side-type">
-                <option value="both">1セット (両方)</option>
-                <option value="single">2セット (左右交互)</option>
-            </select>
-            <button id="add-btn" style="background: var(--accent-color); color: white; padding: 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">追加</button>
+
+        <div style="text-align: center; margin-bottom: 30px; border-bottom: 1px solid #333; padding-bottom: 30px;">
+            <p style="color: #666; font-size: 0.8rem; margin-bottom: 20px; letter-spacing: 2px;">DURATION</p>
+            <div class="picker-container" id="picker">
+                <div class="picker-list" id="picker-list"></div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 30px; border-bottom: 1px solid #333; padding-bottom: 30px;">
+            <p style="color: #666; font-size: 0.8rem; margin-bottom: 20px; letter-spacing: 2px;">ADD STRETCH</p>
+            <div class="input-group">
+                <input type="text" id="new-name" placeholder="種目名">
+                <select id="side-type">
+                    <option value="both">1セット (両方)</option>
+                    <option value="single">2セット (左右交互)</option>
+                </select>
+                <button id="add-btn" style="background: var(--accent-color); color: white; padding: 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">追加</button>
+            </div>
         </div>
         <div id="item-list"></div>
         <button id="close-settings" style="width: 100%; padding: 15px; margin-top: 20px; background: #333; color: white; border: none; border-radius: 8px; cursor: pointer;">閉じる</button>
@@ -234,34 +318,82 @@
     let startTime, elapsedTime = 0, requestID;
 
     const circle = document.getElementById('progress-bar');
-    const radius = circle.r.baseVal.value;
+    const radius = circle ? circle.r.baseVal.value : 0;
     const circumference = 2 * Math.PI * radius;
-    circle.style.strokeDasharray = `${circumference} ${circumference}`;
+    if (circle) circle.style.strokeDasharray = `${circumference} ${circumference}`;
 
-    // --- ピッカー初期化 (1秒刻み・sなし) ---
-    const picker = document.getElementById('picker');
-    const pickerList = document.getElementById('picker-list');
-    for (let i = 1; i <= 300; i++) {
-        const item = document.createElement('div');
-        item.className = 'picker-item';
-        item.innerText = i;
-        item.dataset.sec = i;
-        pickerList.appendChild(item);
-    }
-    picker.onscroll = () => {
-        const items = document.querySelectorAll('.picker-item');
-        const center = picker.getBoundingClientRect().top + picker.clientHeight / 2;
-        items.forEach(item => {
-            const itemCenter = item.getBoundingClientRect().top + item.clientHeight / 2;
-            if (Math.abs(center - itemCenter) < 25) {
-                items.forEach(i => i.classList.remove('selected'));
-                item.classList.add('selected');
-                selectedSeconds = parseInt(item.dataset.sec);
+    // --- 初期化処理 (画面が完全に読み込まれてから実行) ---
+    window.onload = () => {
+        // 1. ピッカー初期化
+        const picker = document.getElementById('picker');
+        const pickerList = document.getElementById('picker-list');
+        if (pickerList) {
+            for (let i = 1; i <= 300; i++) {
+                const item = document.createElement('div');
+                item.className = 'picker-item';
+                item.innerText = i;
+                item.dataset.sec = i;
+                pickerList.appendChild(item);
+            }
+        }
+        if (picker) {
+            picker.onscroll = () => {
+                const items = document.querySelectorAll('.picker-item');
+                const center = picker.getBoundingClientRect().top + picker.clientHeight / 2;
+                items.forEach(item => {
+                    const itemCenter = item.getBoundingClientRect().top + item.clientHeight / 2;
+                    if (Math.abs(center - itemCenter) < 25) {
+                        items.forEach(i => i.classList.remove('selected'));
+                        item.classList.add('selected');
+                        selectedSeconds = parseInt(item.dataset.sec);
+                    }
+                });
+            };
+            setTimeout(() => picker.scrollTop = (30 - 1) * 50, 100);
+        }
+
+        // 2. スライダーと表示の連動
+        const waitInput = document.getElementById('wait-sec-input');
+        const waitDisplay = document.getElementById('wait-val-display');
+        if (waitInput && waitDisplay) {
+            waitInput.oninput = (e) => {
+                const val = e.target.value;
+                waitDisplay.innerText = val;
+                waitTime = parseInt(val) || 0;
+                localStorage.setItem('wait_time', waitTime);
+            };
+            waitInput.value = waitTime;
+            waitDisplay.innerText = waitTime;
+        }
+
+        // 3. 各種ボタンのイベント登録
+        const setClick = (id, fn) => {
+            const el = document.getElementById(id);
+            if (el) el.onclick = fn;
+        };
+
+        setClick('open-settings', () => document.getElementById('panel').classList.add('open'));
+        setClick('close-settings', () => document.getElementById('panel').classList.remove('open'));
+        setClick('main-btn', toggleTimer);
+        setClick('prev-btn', prevStep);
+        setClick('add-btn', () => {
+            const nameInput = document.getElementById('new-name');
+            if (nameInput && nameInput.value) {
+                rawStretches.push({ name: nameInput.value, time: selectedSeconds, type: document.getElementById('side-type').value });
+                nameInput.value = ''; renderList();
             }
         });
-    };
-    setTimeout(() => picker.scrollTop = (30 - 1) * 50, 100);
 
+        // 4. エンターキー対応
+        const newNameInput = document.getElementById('new-name');
+        if (newNameInput) {
+            newNameInput.onkeypress = (e) => { if (e.key === 'Enter') document.getElementById('add-btn').click(); };
+        }
+
+        renderList();
+    };
+
+    // --- タイマー・リスト関連の関数 ---
     function buildQueue() {
         workoutQueue = [];
         rawStretches.forEach(s => {
@@ -277,33 +409,31 @@
     function updateUI() {
         if (workoutQueue.length === 0) return;
         const current = workoutQueue[currentIndex];
-        document.getElementById('current-title').innerText = isWaiting ? "NEXT: " + current.name : current.name;
-        circle.style.stroke = isWaiting ? "var(--wait-color)" : "var(--primary-color)";
+        const titleEl = document.getElementById('current-title');
+        const timeEl = document.getElementById('time-display');
+        if (titleEl) titleEl.innerText = isWaiting ? "NEXT: " + current.name : current.name;
+        if (circle) circle.style.stroke = isWaiting ? "var(--wait-color)" : "var(--primary-color)";
         
         const total = isWaiting ? waitTime * 1000 : current.time * 1000;
         const displayTime = Math.max(0, (total - elapsedTime) / 1000);
-        document.getElementById('time-display').innerText = displayTime.toFixed(1);
-        circle.style.strokeDashoffset = circumference - ((displayTime * 1000 / total) * circumference);
+        if (timeEl) timeEl.innerText = displayTime.toFixed(1);
+        if (circle) circle.style.strokeDashoffset = circumference - ((displayTime * 1000 / total) * circumference);
     }
 
     function animate(timestamp) {
         if (!startTime) startTime = timestamp;
         const currentDelta = timestamp - startTime + elapsedTime;
         const totalLimit = (isWaiting ? waitTime : workoutQueue[currentIndex].time) * 1000;
-
         const remaining = Math.max(0, totalLimit - currentDelta);
-        document.getElementById('time-display').innerText = (remaining / 1000).toFixed(1);
-        circle.style.strokeDashoffset = circumference - ((remaining / totalLimit) * circumference);
+        
+        const timeEl = document.getElementById('time-display');
+        if (timeEl) timeEl.innerText = (remaining / 1000).toFixed(1);
+        if (circle) circle.style.strokeDashoffset = circumference - ((remaining / totalLimit) * circumference);
 
         if (remaining > 0) {
             requestID = requestAnimationFrame(animate);
         } else {
-            if (isWaiting) {
-                isWaiting = false;
-                startStep();
-            } else {
-                nextStep();
-            }
+            if (isWaiting) { isWaiting = false; startStep(); } else { nextStep(); }
         }
     }
 
@@ -317,13 +447,12 @@
     function nextStep() {
         cancelAnimationFrame(requestID);
         elapsedTime = 0; startTime = null;
+        
+        // 音声通知とバイブレーション
+        playNotification();
+        
         currentIndex++;
-        if (currentIndex < workoutQueue.length) {
-            isWaiting = waitTime > 0;
-            startStep();
-        } else {
-            finishWorkout();
-        }
+        if (currentIndex < workoutQueue.length) { isWaiting = waitTime > 0; startStep(); } else { finishWorkout(); }
     }
 
     function prevStep() {
@@ -338,22 +467,25 @@
     function finishWorkout() {
         isRunning = false; isWaiting = false; currentIndex = 0;
         const btn = document.getElementById('main-btn');
-        btn.innerText = "START"; btn.className = "btn-start";
-        document.getElementById('current-title').innerText = "FINISH!";
-        circle.style.strokeDashoffset = 0;
-        circle.style.stroke = "var(--primary-color)";
+        if (btn) { btn.innerText = "START"; btn.className = "btn-start"; }
+        const titleEl = document.getElementById('current-title');
+        if (titleEl) titleEl.innerText = "FINISH!";
+        if (circle) { circle.style.strokeDashoffset = 0; circle.style.stroke = "var(--primary-color)"; }
+        
+        // 完了時の音声とバイブレーション
+        playNotification();
     }
 
     function toggleTimer() {
         const btn = document.getElementById('main-btn');
         if (!isRunning) {
             isRunning = true;
-            btn.innerText = "STOP"; btn.className = "btn-stop";
+            if (btn) { btn.innerText = "STOP"; btn.className = "btn-stop"; }
             startTime = null;
             requestID = requestAnimationFrame(animate);
         } else {
             isRunning = false;
-            btn.innerText = "START"; btn.className = "btn-start";
+            if (btn) { btn.innerText = "START"; btn.className = "btn-start"; }
             cancelAnimationFrame(requestID);
             elapsedTime += (performance.now() - (startTime || performance.now()));
             startTime = null;
@@ -362,21 +494,40 @@
 
     function renderList() {
         const listDiv = document.getElementById('item-list');
+        if (!listDiv) return;
         listDiv.innerHTML = '';
         rawStretches.forEach((s, i) => {
             const item = document.createElement('div');
             item.className = 'list-item';
             item.draggable = true;
-            item.dataset.name = s.name; item.dataset.time = s.time; item.dataset.type = s.type;
             item.innerHTML = `<div class="handle">≡</div><div class="item-info"><strong>${s.name}</strong> (${s.time}秒)</div><button class="remove-btn">✕</button>`;
             item.querySelector('.remove-btn').onclick = () => { rawStretches.splice(i, 1); renderList(); };
-            item.addEventListener('dragstart', () => item.classList.add('dragging'));
-            item.addEventListener('dragend', () => {
-                item.classList.remove('dragging');
-                const items = [...document.querySelectorAll('.list-item')];
-                rawStretches = items.map(el => ({ name: el.dataset.name, time: parseInt(el.dataset.time), type: el.dataset.type }));
-                renderList();
-            });
+            
+            // ドラッグ&ドロップイベント
+            item.ondragstart = (e) => {
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/html', i);
+                item.style.opacity = '0.4';
+            };
+            item.ondragend = () => { item.style.opacity = '1'; };
+            item.ondragover = (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                item.style.borderTop = '2px solid var(--primary-color)';
+            };
+            item.ondragleave = () => { item.style.borderTop = 'none'; };
+            item.ondrop = (e) => {
+                e.preventDefault();
+                item.style.borderTop = 'none';
+                const fromIndex = parseInt(e.dataTransfer.getData('text/html'));
+                const toIndex = i;
+                if (fromIndex !== toIndex) {
+                    const [moved] = rawStretches.splice(fromIndex, 1);
+                    rawStretches.splice(toIndex, 0, moved);
+                    renderList();
+                }
+            };
+            
             listDiv.appendChild(item);
         });
         localStorage.setItem('stretch_data', JSON.stringify(rawStretches));
@@ -384,51 +535,34 @@
         if (!isRunning) updateUI();
     }
 
-    // イベント
-    document.getElementById('new-name').onkeypress = (e) => { if (e.key === 'Enter') document.getElementById('add-btn').click(); };
-    document.getElementById('add-btn').onclick = () => {
-        const nameInput = document.getElementById('new-name');
-        if (nameInput.value) {
-            rawStretches.push({ name: nameInput.value, time: selectedSeconds, type: document.getElementById('side-type').value });
-            nameInput.value = ''; renderList();
+    // 音声通知とバイブレーション
+    function playNotification() {
+        // バイブレーション（200ms × 2回）
+        if ('vibrate' in navigator) {
+            navigator.vibrate([200, 100, 200]);
         }
-    };
-  // --- 修正版：エラーを回避する書き方 ---
-    const waitInput = document.getElementById('wait-sec-input');
-    const waitDisplay = document.getElementById('wait-val-display');
-
-    // スライダーが存在する場合のみ処理を実行する（エラー回避ガード）
-    if (waitInput && waitDisplay) {
-        waitInput.oninput = (e) => {
-            const val = e.target.value;
-            waitDisplay.innerText = val;
-            waitTime = parseInt(val) || 0;
-            localStorage.setItem('wait_time', waitTime);
-        };
-        // 初期値をセット
-        waitInput.value = waitTime;
-        waitDisplay.innerText = waitTime;
+        
+        // ビープ音（Web Audio API）
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.frequency.value = 800; // 周波数
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+            
+            oscillator.start(audioCtx.currentTime);
+            oscillator.stop(audioCtx.currentTime + 0.2);
+        } catch (e) {
+            console.log('Audio notification not supported');
+        }
     }
-
-    // 設定画面を開く・閉じるボタンの処理
-    const openBtn = document.getElementById('open-settings');
-    const closeBtn = document.getElementById('close-settings');
-    const panel = document.getElementById('panel');
-
-    if (openBtn && panel) {
-        openBtn.onclick = () => panel.classList.add('open');
-    }
-    if (closeBtn && panel) {
-        closeBtn.onclick = () => panel.classList.remove('open');
-    }
-
-    // メインボタンと戻るボタン
-    const mainBtn = document.getElementById('main-btn');
-    const prevBtn = document.getElementById('prev-btn');
-    if (mainBtn) mainBtn.onclick = toggleTimer;
-    if (prevBtn) prevBtn.onclick = prevStep;
-
-    renderList();
 </script>
 </body>
 </html>

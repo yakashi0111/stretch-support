@@ -142,6 +142,7 @@
     <div class="inner-ui">
         <h1 id="current-title">Ready</h1>
         <div id="time-display">0.0</div>
+        <button id="prev-btn" style="background: #333; margin-right: 10px; border-radius: 50px; padding: 15px 25px; color: white; border: none; cursor: pointer; font-weight: bold;">PREV</button>
         <button id="main-btn" class="btn-start">START</button>
     </div>
 </div>
@@ -153,6 +154,10 @@
 <div class="settings-panel" id="panel">
     <div style="max-width: 450px; margin: 0 auto;">
         <h2 style="text-align:center;">MENU</h2>
+        <div style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 20px;">
+    <p style="margin-bottom: 10px; color: #aaa;">種目間の待機時間 (秒)</p>
+    <input type="number" id="wait-sec-input" value="5" min="0" max="60" style="width: 80px; text-align: center; font-size: 1.2rem; background: #222; border: 1px solid #444; color: white; padding: 10px; border-radius: 8px;">
+</div>
         <div class="picker-container" id="picker">
             <div class="picker-list" id="picker-list"></div>
         </div>
@@ -170,11 +175,14 @@
 </div>
 
 <script>
+  // --- 状態管理 ---
     let rawStretches = JSON.parse(localStorage.getItem('stretch_data')) || [{ name: "ハム", time: 30, type: "both" }];
+    let waitTime = parseInt(localStorage.getItem('wait_time')) || 5;
     let workoutQueue = [];
     let currentIndex = 0;
     let selectedSeconds = 30;
     let isRunning = false;
+    let isWaiting = false; 
     let startTime, elapsedTime = 0, requestID;
 
     const circle = document.getElementById('progress-bar');
@@ -182,13 +190,16 @@
     const circumference = 2 * Math.PI * radius;
     circle.style.strokeDasharray = `${circumference} ${circumference}`;
 
-    // --- 1秒刻みのピッカー生成 ---
+    // 数字のガタつき防止をコードから強制適用
+    document.getElementById('time-display').style.fontVariantNumeric = 'tabular-nums';
+
+    // --- ピッカー初期化 ---
     const picker = document.getElementById('picker');
     const pickerList = document.getElementById('picker-list');
     for (let i = 1; i <= 300; i++) {
         const item = document.createElement('div');
         item.className = 'picker-item';
-        item.innerText = i; // 's'を削除
+        item.innerText = i;
         item.dataset.sec = i;
         pickerList.appendChild(item);
     }
@@ -204,7 +215,6 @@
             }
         });
     };
-    // 初期値を30秒にセット
     setTimeout(() => picker.scrollTop = (30 - 1) * 50, 100);
 
     function buildQueue() {
@@ -222,72 +232,94 @@
     function updateUI() {
         if (workoutQueue.length === 0) {
             document.getElementById('current-title').innerText = "NO MENU";
-            document.getElementById('time-display').innerText = "0.0";
             return;
         }
         const current = workoutQueue[currentIndex];
-        document.getElementById('current-title').innerText = current.name;
-        document.getElementById('time-display').innerText = current.time.toFixed(1);
-        circle.style.strokeDashoffset = 0;
+        document.getElementById('current-title').innerText = isWaiting ? "NEXT: " + current.name : current.name;
+        
+        const totalLimit = isWaiting ? waitTime : current.time;
+        const displayTime = Math.max(0, totalLimit - (elapsedTime / 1000));
+        document.getElementById('time-display').innerText = displayTime.toFixed(1);
+        
+        circle.style.stroke = isWaiting ? "#f1c40f" : "#2ecc71";
+        circle.style.strokeDashoffset = circumference - ((displayTime / totalLimit) * circumference);
     }
 
-    function animate() {
-        const currentTotal = workoutQueue[currentIndex].time * 1000;
-        const now = performance.now();
-        const delta = now - startTime + elapsedTime;
-        const remaining = Math.max(0, currentTotal - delta);
+    function animate(timestamp) {
+        if (!startTime) startTime = timestamp;
+        const currentDelta = timestamp - startTime + elapsedTime;
+        const totalLimit = (isWaiting ? waitTime : workoutQueue[currentIndex].time) * 1000;
 
+        const remaining = Math.max(0, totalLimit - currentDelta);
         document.getElementById('time-display').innerText = (remaining / 1000).toFixed(1);
-        circle.style.strokeDashoffset = circumference - ((remaining / currentTotal) * circumference);
+        circle.style.strokeDashoffset = circumference - ((remaining / totalLimit) * circumference);
 
         if (remaining > 0) {
             requestID = requestAnimationFrame(animate);
         } else {
-            nextStep();
+            if (isWaiting) {
+                isWaiting = false;
+                startStep();
+            } else {
+                nextStep();
+            }
         }
+    }
+
+    function startStep() {
+        cancelAnimationFrame(requestID);
+        elapsedTime = 0;
+        startTime = null;
+        updateUI();
+        if (isRunning) requestID = requestAnimationFrame(animate);
     }
 
     function nextStep() {
         cancelAnimationFrame(requestID);
         elapsedTime = 0;
+        startTime = null;
         currentIndex++;
-
         if (currentIndex < workoutQueue.length) {
-            updateUI();
-            setTimeout(() => {
-                if (isRunning) {
-                    startTime = performance.now();
-                    requestID = requestAnimationFrame(animate);
-                }
-            }, 5000); 
+            isWaiting = true;
+            startStep();
         } else {
             finishWorkout();
         }
     }
 
+    function prevStep() {
+        cancelAnimationFrame(requestID);
+        elapsedTime = 0;
+        startTime = null;
+        isWaiting = false;
+        if (currentIndex > 0) currentIndex--;
+        updateUI();
+        if (isRunning) requestID = requestAnimationFrame(animate);
+    }
+
     function finishWorkout() {
         isRunning = false;
+        isWaiting = false;
         currentIndex = 0;
-        document.getElementById('main-btn').innerText = "START";
-        document.getElementById('main-btn').className = "btn-start";
+        const btn = document.getElementById('main-btn');
+        btn.innerText = "START"; btn.className = "btn-start";
         document.getElementById('current-title').innerText = "FINISH!";
-        document.getElementById('time-display').innerText = "0.0";
         circle.style.strokeDashoffset = 0;
     }
 
     function toggleTimer() {
-        if (workoutQueue.length === 0) return;
         const btn = document.getElementById('main-btn');
         if (!isRunning) {
             isRunning = true;
             btn.innerText = "STOP"; btn.className = "btn-stop";
-            startTime = performance.now();
+            startTime = null;
             requestID = requestAnimationFrame(animate);
         } else {
             isRunning = false;
             btn.innerText = "START"; btn.className = "btn-start";
             cancelAnimationFrame(requestID);
-            elapsedTime += performance.now() - startTime;
+            elapsedTime += (performance.now() - (startTime || performance.now()));
+            startTime = null;
         }
     }
 
@@ -301,74 +333,43 @@
             item.dataset.name = s.name;
             item.dataset.time = s.time;
             item.dataset.type = s.type;
-            
-            item.innerHTML = `
-                <div class="handle">≡</div>
-                <div class="item-info"><strong>${s.name}</strong> (${s.time}秒)</div>
-                <button class="remove-btn">✕</button>
-            `;
-            
-            item.querySelector('.remove-btn').onclick = () => removeItem(i);
+            item.innerHTML = `<div class="handle">≡</div><div class="item-info"><strong>${s.name}</strong> (${s.time}秒)</div><button class="remove-btn">✕</button>`;
+            item.querySelector('.remove-btn').onclick = () => { rawStretches.splice(i, 1); renderList(); };
             item.addEventListener('dragstart', () => item.classList.add('dragging'));
             item.addEventListener('dragend', () => {
                 item.classList.remove('dragging');
-                saveOrder();
+                const items = [...document.querySelectorAll('.list-item')];
+                rawStretches = items.map(el => ({ name: el.dataset.name, time: parseInt(el.dataset.time), type: el.dataset.type }));
+                // 待機時間が変更されたら保存する
+document.getElementById('wait-sec-input').onchange = (e) => {
+    waitTime = parseInt(e.target.value) || 0;
+    localStorage.setItem('wait_time', waitTime);
+};
+
+// 起動時に入力欄へ現在の値をセットする
+document.getElementById('wait-sec-input').value = waitTime;
+                renderList();
             });
             listDiv.appendChild(item);
         });
-
-        listDiv.ondragover = e => {
-            e.preventDefault();
-            const draggingItem = document.querySelector('.dragging');
-            const siblings = [...listDiv.querySelectorAll('.list-item:not(.dragging)')];
-            const nextSibling = siblings.find(sibling => e.clientY <= sibling.getBoundingClientRect().top + sibling.getBoundingClientRect().height / 2);
-            listDiv.insertBefore(draggingItem, nextSibling);
-        };
-        
         localStorage.setItem('stretch_data', JSON.stringify(rawStretches));
         buildQueue();
-        updateUI();
+        if (!isRunning) updateUI();
     }
 
-    function saveOrder() {
-        const items = [...document.querySelectorAll('.list-item')];
-        rawStretches = items.map(item => ({
-            name: item.dataset.name,
-            time: parseInt(item.dataset.time),
-            type: item.dataset.type
-        }));
-        renderList();
-    }
-
-    function removeItem(i) {
-        rawStretches.splice(i, 1);
-        renderList();
-    }
-
-   // エンターキー入力への対応
-    document.getElementById('new-name').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            document.getElementById('add-btn').click();
-        }
-    });
-
-    // 追加ボタンの処理（中身は同じですがセットで貼り直すと確実です）
+    document.getElementById('new-name').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('add-btn').click(); });
     document.getElementById('add-btn').onclick = () => {
         const nameInput = document.getElementById('new-name');
         if (nameInput.value) {
-            rawStretches.push({ 
-                name: nameInput.value, 
-                time: selectedSeconds, 
-                type: document.getElementById('side-type').value 
-            });
-            nameInput.value = '';
-            renderList();
+            rawStretches.push({ name: nameInput.value, time: selectedSeconds, type: document.getElementById('side-type').value });
+            nameInput.value = ''; renderList();
         }
     };
+
     document.getElementById('open-settings').onclick = () => document.getElementById('panel').classList.add('open');
     document.getElementById('close-settings').onclick = () => document.getElementById('panel').classList.remove('open');
     document.getElementById('main-btn').onclick = toggleTimer;
+    document.getElementById('prev-btn').onclick = prevStep;
 
     renderList();
 </script>

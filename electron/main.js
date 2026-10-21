@@ -40,6 +40,8 @@ function createWindow() {
     win = new BrowserWindow({
         width: NORMAL_DEFAULT.width, height: NORMAL_DEFAULT.height,
         minWidth: NORMAL_MIN.width, minHeight: NORMAL_MIN.height,
+        // macOS の全画面 Space 上にもミニ表示を載せられるよう、パネル型で作成する。
+        ...(process.platform === 'darwin' ? { type: 'panel' } : {}),
         title: 'Stretch Tool',
         backgroundColor: '#0b0c0f',
         titleBarStyle: 'hidden',                 // 太いタイトルバーをなくし、信号ボタンだけ残す

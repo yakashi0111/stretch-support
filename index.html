@@ -10,6 +10,7 @@
     --bg: #0b0c0f;
     --surface: #15171c;
     --surface-2: #1d2027;
+    --card: #1a1c22;
     --border: #262a32;
     --text: #f2f3f5;
     --muted: #7b8190;
@@ -109,17 +110,20 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--blue); outl
 
 /* ===== オーバーレイ共通 ===== */
 .overlay {
-    position: fixed; inset: 0; z-index: 200; display: none;
-    background: rgba(0,0,0,.6); align-items: flex-end; justify-content: center;
+    position: fixed; inset: 0; z-index: 200; display: flex;
+    background: rgba(0,0,0,.62); align-items: flex-end; justify-content: center;
+    opacity: 0; visibility: hidden;
+    transition: opacity .26s ease, visibility 0s linear .26s;
 }
-.overlay.open { display: flex; }
+.overlay.open { opacity: 1; visibility: visible; transition: opacity .26s ease, visibility 0s; }
 .sheet {
     width: 100%; max-width: 560px; max-height: 85dvh; overflow-y: auto;
-    background: var(--surface); border-radius: 20px 20px 0 0;
+    background: var(--card); border-radius: 28px 28px 0 0;
     padding: 18px 18px max(22px, env(safe-area-inset-bottom));
-    animation: up .2s ease-out;
+    transform: translateY(100%);
+    transition: transform .28s cubic-bezier(.2, .8, .2, 1);
 }
-@keyframes up { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+.overlay.open .sheet { transform: none; }
 .sheet h3 { margin: 0 0 14px; font-size: 1rem; }
 .sheet .row { display: flex; gap: 8px; margin-top: 10px; }
 .sheet textarea { width: 100%; min-height: 96px; resize: vertical; font-size: .8rem; word-break: break-all; }
@@ -132,15 +136,74 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--blue); outl
 .btn.danger { color: var(--red); }
 .btn.armed { background: var(--red); color: #1c0606; }
 
-.routine-row {
-    width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px;
-    text-align: left; padding: 14px; margin-bottom: 8px; border-radius: 12px;
-    background: var(--surface-2); border: 1px solid transparent;
+/* ===== ルーティーン一覧ページ ===== */
+.page {
+    position: fixed; inset: 0; z-index: 150; display: none;
+    background: var(--bg); overflow-y: auto;
 }
-.routine-row.active { border-color: var(--green); }
-.routine-row .rn { font-weight: 600; }
-.routine-row .rm { font-size: .78rem; color: var(--muted); margin-top: 2px; }
-.routine-row .ck { color: var(--green); font-size: 1.1rem; }
+.page.open { display: block; }
+.page-inner { max-width: 560px; margin: 0 auto; padding: 0 18px max(28px, env(safe-area-inset-bottom)); }
+.page-head {
+    position: sticky; top: 0; z-index: 5; background: var(--bg);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: max(14px, env(safe-area-inset-top)) 0 12px;
+}
+.page-head h2 { margin: 0; font-size: 1.7rem; font-weight: 700; }
+.page-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 6px 0 24px; }
+.page-actions button {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    height: 54px; border-radius: 14px; background: var(--card);
+    font-size: 1rem; font-weight: 600;
+}
+.page-actions svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.page-sub { font-size: .95rem; color: var(--muted); margin: 0 0 12px 2px; }
+
+.rc {
+    background: var(--card); border-radius: 18px; padding: 16px;
+    margin-bottom: 14px; border: 1px solid transparent;
+}
+.rc.active { border-color: rgba(52, 211, 153, .4); }
+.rc-top { display: flex; align-items: center; gap: 6px; }
+.rc-title { flex: 1; min-width: 0; display: flex; align-items: baseline; }
+.rc-name {
+    flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font-size: 1.32rem; font-weight: 700; line-height: 1.3;
+}
+.rc-time { flex: none; white-space: nowrap; margin-left: .45em; font-size: 1.1rem; font-weight: 500; color: #c3c7d1; }
+.rc-more {
+    flex: none; width: 44px; height: 44px; margin: -6px -8px -6px 0;
+    display: grid; place-items: center; border-radius: 50%; color: var(--muted);
+}
+.rc-more svg { width: 24px; height: 24px; fill: currentColor; }
+.rc-more:active { background: var(--surface-2); }
+.rc-preview {
+    margin: 6px 0 0; font-size: .95rem; line-height: 1.5; color: #8b91a0;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    word-break: break-word;
+}
+.rc-start {
+    display: block; width: 100%; height: 50px; margin-top: 16px; border-radius: 12px;
+    background: var(--green); color: #04130c; font-size: 1.05rem; font-weight: 700; letter-spacing: .06em;
+}
+.rc-start:active:not(:disabled) { transform: scale(.985); }
+
+/* ===== 三点メニュー (ボトムシート) ===== */
+.grabber { width: 44px; height: 5px; border-radius: 3px; background: #4a4f5b; margin: -6px auto 14px; }
+.act-title {
+    text-align: center; font-size: 1rem; padding-bottom: 16px;
+    border-bottom: 1px solid var(--border); margin-bottom: 14px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.act-list { background: var(--surface-2); border-radius: 16px; overflow: hidden; }
+.act-row {
+    width: 100%; height: 62px; display: flex; align-items: center; gap: 16px;
+    padding: 0 18px; font-size: 1.02rem; text-align: left;
+}
+.act-row + .act-row { border-top: 1px solid var(--border); }
+.act-row svg { width: 24px; height: 24px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.act-row:active:not(:disabled) { background: rgba(255,255,255,.05); }
+.act-row.danger { color: var(--red); }
+.act-sheet { padding-bottom: max(34px, calc(env(safe-area-inset-bottom) + 18px)); }
 
 /* ===== 設定パネル ===== */
 .settings-panel {
@@ -320,14 +383,50 @@ input[type="range"]::-moz-range-thumb { width: 22px; height: 22px; border: none;
   </div>
 </div>
 
-<!-- ルーティーン切り替え -->
-<div class="overlay" id="sheet-routines">
-  <div class="sheet">
-    <h3>ルーティーンを選ぶ</h3>
+<!-- ルーティーン一覧 -->
+<div class="page" id="routines-page">
+  <div class="page-inner">
+    <div class="page-head">
+        <h2>ルーティーン</h2>
+        <button class="btn" style="flex:none;padding:9px 18px" id="close-page">閉じる</button>
+    </div>
+    <div class="page-actions">
+        <button id="page-new">
+            <svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2.5"/><path d="M9 4V3h6v1M12 9v7M8.5 12.5h7"/></svg>
+            新規作成
+        </button>
+        <button id="page-import">
+            <svg viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg>
+            取り込み
+        </button>
+    </div>
+    <p class="page-sub" id="page-sub"></p>
     <div id="routine-list"></div>
-    <div class="row">
-        <button class="btn" id="sheet-new">＋ 新しいルーティーン</button>
-        <button class="btn" id="sheet-import">取り込み</button>
+  </div>
+</div>
+
+<!-- 三点メニュー -->
+<div class="overlay" id="sheet-actions">
+  <div class="sheet act-sheet">
+    <div class="grabber"></div>
+    <div class="act-title" id="act-title"></div>
+    <div class="act-list">
+        <button class="act-row" id="act-share">
+            <svg viewBox="0 0 24 24"><path d="M12 15V4M8 8l4-4 4 4M5 13v6h14v-6"/></svg>
+            <span>ルーティーンを共有</span>
+        </button>
+        <button class="act-row" id="act-dup">
+            <svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6.5A2.5 2.5 0 0 0 13.5 4h-7A2.5 2.5 0 0 0 4 6.5v7A2.5 2.5 0 0 0 6.5 16H8"/></svg>
+            <span>複製</span>
+        </button>
+        <button class="act-row" id="act-edit">
+            <svg viewBox="0 0 24 24"><path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19l-4 1zM14.5 6.5l3 3"/></svg>
+            <span>編集</span>
+        </button>
+        <button class="act-row danger" id="act-del">
+            <svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5 5 19"/></svg>
+            <span>削除</span>
+        </button>
     </div>
   </div>
 </div>
@@ -581,7 +680,7 @@ function renderChip() { $('routine-name').textContent = cur().name || '(無題)'
 function mutate(fn) {
     fn(); save(); resetTimer(); rebuild(); renderAll();
 }
-function renderAll() { renderChip(); renderSettings(); renderTimer(); }
+function renderAll() { renderChip(); renderSettings(); renderTimer(); renderRoutinePage(); }
 
 function renderSettings() {
     const r = cur();
@@ -707,33 +806,89 @@ function closeSettings() {
 }
 
 /* ===== ルーティーン切り替え ===== */
-function renderRoutineSheet() {
+function fmtJa(sec) {
+    sec = Math.max(0, Math.round(sec));
+    const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
+    return (h ? `${h}時間` : '') + (m ? `${m}分` : '') + (s || !(h || m) ? `${s}秒` : '');
+}
+const SVG_MORE = '<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg>';
+
+function renderRoutinePage() {
     const box = $('routine-list'); box.innerHTML = '';
+    $('page-sub').textContent = `マイルーティーン (${state.routines.length})`;
     state.routines.forEach(r => {
-        const b = document.createElement('button');
-        b.className = 'routine-row' + (r.id === state.activeId ? ' active' : '');
-        const left = document.createElement('div');
-        const n = document.createElement('div'); n.className = 'rn'; n.textContent = r.name || '(無題)';
-        const m = document.createElement('div'); m.className = 'rm';
-        m.textContent = `${r.items.length}種目 ・ 合計 ${fmt(routineTotalSec(r))}`;
-        left.append(n, m);
-        const ck = document.createElement('span'); ck.className = 'ck'; ck.textContent = r.id === state.activeId ? '✓' : '';
-        b.append(left, ck);
-        b.onclick = () => selectRoutine(r.id);
-        box.appendChild(b);
+        const card = document.createElement('div');
+        card.className = 'rc' + (r.id === state.activeId ? ' active' : '');
+
+        const top = document.createElement('div'); top.className = 'rc-top';
+        const title = document.createElement('div'); title.className = 'rc-title';
+        const name = document.createElement('span'); name.className = 'rc-name'; name.textContent = r.name || '(無題)';
+        const time = document.createElement('span'); time.className = 'rc-time';
+        time.textContent = `- ${fmtJa(routineTotalSec(r))}`;
+        title.append(name, time);
+        const more = document.createElement('button');
+        more.className = 'rc-more'; more.setAttribute('aria-label', 'メニュー'); more.innerHTML = SVG_MORE;
+        more.onclick = () => openActions(r.id);
+        top.append(title, more);
+
+        const prev = document.createElement('p'); prev.className = 'rc-preview';
+        prev.textContent = r.items.length ? r.items.map(s => s.name).join('、') : '種目がありません';
+
+        const start = document.createElement('button');
+        start.className = 'rc-start'; start.textContent = '開始'; start.disabled = !r.items.length;
+        start.onclick = () => startRoutine(r.id);
+
+        card.append(top, prev, start);
+        box.appendChild(card);
     });
 }
-function selectRoutine(id) {
+const openPage = () => { if (running) { stopLoop(); renderTimer(); } renderRoutinePage(); $('routines-page').classList.add('open'); };
+const closePage = () => $('routines-page').classList.remove('open');
+
+function activate(id) {
     state.activeId = id; save(); editingIndex = -1;
-    resetTimer(); rebuild(); renderAll(); closeSheet('sheet-routines');
+    resetTimer(); rebuild(); renderAll();
+}
+function startRoutine(id) {
+    activate(id); closePage(); $('panel').classList.remove('open');
+    toggle();
 }
 function newRoutine() {
     const r = { id: uid(), name: `ルーティーン ${state.routines.length + 1}`, wait: 5, items: [] };
-    state.routines.push(r); state.activeId = r.id; save(); editingIndex = -1;
-    resetTimer(); rebuild(); renderAll();
-    closeSheet('sheet-routines'); openSettings();
+    state.routines.push(r); activate(r.id);
+    closePage(); openSettings();
     setTimeout(() => { $('set-routine-name').focus(); $('set-routine-name').select(); }, 50);
 }
+function duplicateRoutine(r) {
+    const copy = { id: uid(), name: (r.name + ' のコピー').slice(0, 30), wait: r.wait, items: r.items.map(s => ({ ...s })) };
+    state.routines.splice(state.routines.indexOf(r) + 1, 0, copy); save();
+    return copy;
+}
+function deleteRoutine(id) {
+    if (state.routines.length <= 1) return;
+    const i = state.routines.findIndex(r => r.id === id);
+    const wasActive = id === state.activeId;
+    state.routines.splice(i, 1);
+    if (wasActive) { state.activeId = state.routines[Math.max(0, i - 1)].id; editingIndex = -1; resetTimer(); }
+    save(); rebuild(); renderAll();
+}
+
+/* ===== 三点メニュー ===== */
+let actionId = null, actDelArmed = false;
+function setActDelArmed(on) {
+    actDelArmed = on;
+    const b = $('act-del');
+    b.querySelector('span').textContent = on ? 'もう一度タップで削除' : '削除';
+}
+function openActions(id) {
+    actionId = id;
+    const r = state.routines.find(x => x.id === id); if (!r) return;
+    $('act-title').textContent = r.name || '(無題)';
+    $('act-del').disabled = state.routines.length <= 1;
+    setActDelArmed(false);
+    openSheet('sheet-actions');
+}
+const actionRoutine = () => state.routines.find(x => x.id === actionId);
 
 /* ===== 共有コード ===== */
 function enc(obj) {
@@ -774,12 +929,13 @@ async function copyText(text, okMsg) {
     const ta = $('share-code'); ta.focus(); ta.select();
     try { document.execCommand('copy'); toast(okMsg); } catch (e) { toast('コピーできませんでした'); }
 }
-function openShare() {
-    const code = shareCode(cur());
-    $('share-code').value = code;
+let shareTarget = null;
+function openShare(r) {
+    shareTarget = r || cur();
+    $('share-code').value = shareCode(shareTarget);
     openSheet('sheet-share');
 }
-const shareLink = () => location.href.split('#')[0] + '#r=' + shareCode(cur());
+const shareLink = () => location.href.split('#')[0] + '#r=' + shareCode(shareTarget || cur());
 
 let pendingImport = null;
 function openImport(prefill) {
@@ -806,18 +962,34 @@ $('prev-btn').onclick = prev;
 $('skip-btn').onclick = skip;
 $('open-settings').onclick = openSettings;
 $('close-settings').onclick = closeSettings;
-$('routine-chip').onclick = () => { if (running) { stopLoop(); renderTimer(); } renderRoutineSheet(); openSheet('sheet-routines'); };
-
-$('sheet-new').onclick = newRoutine;
+$('routine-chip').onclick = openPage;
+$('close-page').onclick = closePage;
+$('page-new').onclick = newRoutine;
+$('page-import').onclick = () => openImport('');
 $('btn-new').onclick = newRoutine;
-$('btn-switch').onclick = () => { renderRoutineSheet(); openSheet('sheet-routines'); };
-$('sheet-import').onclick = () => { closeSheet('sheet-routines'); openImport(''); };
+$('btn-switch').onclick = openPage;
 $('btn-import').onclick = () => openImport('');
-$('btn-share').onclick = openShare;
+$('btn-share').onclick = () => openShare(cur());
+
+$('act-share').onclick = () => { const r = actionRoutine(); closeSheet('sheet-actions'); if (r) openShare(r); };
+$('act-dup').onclick = () => {
+    const r = actionRoutine(); closeSheet('sheet-actions');
+    if (r) { duplicateRoutine(r); renderAll(); toast('複製しました'); }
+};
+$('act-edit').onclick = () => {
+    const id = actionId; closeSheet('sheet-actions');
+    if (id) { activate(id); closePage(); openSettings(); }
+};
+$('act-del').onclick = () => {
+    if (!actDelArmed) { setActDelArmed(true); return; }
+    const id = actionId; closeSheet('sheet-actions');
+    deleteRoutine(id); toast('削除しました');
+};
 $('copy-code').onclick = () => copyText($('share-code').value, 'コードをコピーしました');
 $('copy-link').onclick = () => copyText(shareLink(), 'リンクをコピーしました');
 $('native-share').onclick = async () => {
-    const data = { title: `ストレッチ: ${cur().name}`, text: `ストレッチルーティーン「${cur().name}」\n${shareLink()}` };
+    const nm = (shareTarget || cur()).name;
+    const data = { title: `ストレッチ: ${nm}`, text: `ストレッチルーティーン「${nm}」\n${shareLink()}` };
     if (navigator.share) { try { await navigator.share(data); } catch (e) {} }
     else copyText(shareLink(), 'リンクをコピーしました');
 };
@@ -829,12 +1001,7 @@ $('import-go').onclick = () => {
     closeSheet('sheet-import-box'); toast('取り込みました');
 };
 
-$('btn-dup').onclick = () => {
-    const r = cur();
-    const copy = { id: uid(), name: (r.name + ' のコピー').slice(0, 30), wait: r.wait, items: r.items.map(s => ({ ...s })) };
-    state.routines.push(copy); state.activeId = copy.id; save();
-    editingIndex = -1; resetTimer(); rebuild(); renderAll(); toast('複製しました');
-};
+$('btn-dup').onclick = () => { activate(duplicateRoutine(cur()).id); toast('複製しました'); };
 let delArmed = false, delTimer;
 $('btn-del').onclick = () => {
     const b = $('btn-del');
@@ -843,10 +1010,7 @@ $('btn-del').onclick = () => {
         delTimer = setTimeout(disarm, 3000); return;
     }
     disarm();
-    const i = state.routines.findIndex(r => r.id === state.activeId);
-    state.routines.splice(i, 1);
-    state.activeId = state.routines[Math.max(0, i - 1)].id; save();
-    editingIndex = -1; resetTimer(); rebuild(); renderAll(); toast('削除しました');
+    deleteRoutine(state.activeId); toast('削除しました');
 };
 function disarm() {
     delArmed = false; clearTimeout(delTimer);

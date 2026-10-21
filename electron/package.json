@@ -1,0 +1,20 @@
+{
+  "name": "stretch-tool",
+  "productName": "Stretch Tool",
+  "version": "1.0.0",
+  "description": "Stretch Tool — macOS desktop app with a mini always-on-top timer",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "sync": "node scripts/sync-renderer.js",
+    "start": "npm run sync && electron .",
+    "test": "node test/mini-window.test.js",
+    "build": "npm run sync && electron-packager . \"Stretch Tool\" --platform=darwin --arch=arm64 --out=dist --overwrite --ignore=\"^/(dist|test)($|/)\" && node scripts/adhoc-sign.js",
+    "build:intel": "npm run sync && electron-packager . \"Stretch Tool\" --platform=darwin --arch=x64 --out=dist --overwrite --ignore=\"^/(dist|test)($|/)\" && node scripts/adhoc-sign.js",
+    "build:universal": "npm run sync && electron-packager . \"Stretch Tool\" --platform=darwin --arch=universal --out=dist --overwrite --ignore=\"^/(dist|test)($|/)\" && node scripts/adhoc-sign.js"
+  },
+  "devDependencies": {
+    "@electron/packager": ">=18.3.0",
+    "electron": "^39.0.0"
+  }
+}

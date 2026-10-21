@@ -22,53 +22,91 @@
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { height: 100%; }
 body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--text);
+    margin: 0; background: var(--bg); color: var(--text); overflow: hidden;
     font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Segoe UI", Roboto, sans-serif;
-    overflow: hidden;
 }
 button { font-family: inherit; color: inherit; cursor: pointer; border: none; background: none; }
 button:disabled { opacity: .35; cursor: default; }
-input, select, textarea {
+input, textarea {
     font-family: inherit; font-size: 1rem; color: var(--text);
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 10px; padding: 12px;
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 13px 14px; width: 100%;
 }
-input:focus, select:focus, textarea:focus { outline: 2px solid var(--blue); outline-offset: -1px; }
+input:focus, textarea:focus { outline: 2px solid var(--blue); outline-offset: -1px; }
+.invalid, input.invalid:focus { outline: 2px solid var(--red) !important; outline-offset: -1px; }
+.hidden { display: none !important; }
+.view { position: fixed; inset: 0; background: var(--bg); overflow-y: auto; }
 
-/* ===== メイン画面 ===== */
+.btn {
+    flex: 1; padding: 13px 14px; border-radius: 12px; font-weight: 600; font-size: .95rem;
+    background: var(--surface-2); border: 1px solid var(--border);
+}
+.btn.primary { background: var(--blue); color: #06121f; border-color: transparent; }
+
+/* ===== 編集画面 (起動時の画面) ===== */
+.ed-inner { max-width: 640px; margin: 0 auto; padding: 0 18px max(40px, env(safe-area-inset-bottom)); }
+.ed-head {
+    position: sticky; top: 0; z-index: 5; background: var(--bg);
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: max(14px, env(safe-area-inset-top)) 0 12px;
+}
+.pill {
+    display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 16px;
+    border-radius: 999px; background: var(--card); font-size: .95rem; font-weight: 600;
+}
+.pill svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.pill.start { background: var(--green); color: #04130c; }
+.pill.start svg { fill: currentColor; stroke: none; }
+
+.ed-label { font-size: .75rem; letter-spacing: .1em; color: var(--muted); margin: 14px 0 8px 2px; }
+.name-input { font-size: 1.35rem; font-weight: 700; padding: 15px 16px; background: var(--card); border-radius: 14px; }
+
+.list-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 32px 2px 12px; }
+.list-head h2 { margin: 0; font-size: 1.15rem; font-weight: 700; }
+#list-summary { font-size: .8rem; color: var(--muted); text-align: right; }
+
+.item {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--card); border-radius: 14px; padding: 12px 4px 12px 14px; margin-bottom: 10px;
+}
+.item.dragging { opacity: .4; }
+.item.drop-target { box-shadow: 0 -2px 0 var(--green); }
+.item-no {
+    flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--surface-2);
+    display: grid; place-items: center; font-size: .78rem; color: var(--muted); font-variant-numeric: tabular-nums;
+}
+.item-body { flex: 1; min-width: 0; cursor: pointer; padding: 4px 0; border-radius: 8px; }
+.item-body:focus-visible { outline: 2px solid var(--blue); outline-offset: 4px; }
+.item-name { font-size: 1.1rem; font-weight: 600; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item-sub { font-size: .85rem; color: var(--muted); margin-top: 3px; line-height: 1.35; }
+.item-more { flex: none; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; color: var(--muted); }
+.item-more svg { width: 22px; height: 22px; fill: currentColor; }
+.item-more:hover, .item-more:active { background: var(--surface-2); }
+.empty {
+    padding: 26px 18px; text-align: center; line-height: 1.7; font-size: .92rem; color: var(--muted);
+    background: var(--card); border-radius: 14px; margin-bottom: 10px;
+}
+.add-btn {
+    width: 100%; height: 54px; border-radius: 14px; font-size: 1rem; font-weight: 600;
+    background: var(--surface-2); border: 1px solid var(--border); margin-top: 4px;
+}
+.add-btn:hover { background: #242832; }
+
+/* ===== タイマー画面 ===== */
 .app {
-    height: 100dvh;
-    display: flex; flex-direction: column; align-items: center;
+    height: 100dvh; display: flex; flex-direction: column; align-items: center;
     padding: max(14px, env(safe-area-inset-top)) 18px max(18px, env(safe-area-inset-bottom));
     max-width: 560px; margin: 0 auto;
 }
 .top { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.chip {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 9px 14px; border-radius: 999px;
-    background: var(--surface); border: 1px solid var(--border);
-    font-size: .95rem; font-weight: 600; max-width: 75%;
-}
-.chip span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.chip .caret { color: var(--muted); font-size: .75rem; }
-.icon-btn {
-    width: 42px; height: 42px; border-radius: 50%;
-    background: var(--surface); border: 1px solid var(--border);
-    display: grid; place-items: center;
-}
-.icon-btn svg { width: 22px; height: 22px; fill: var(--muted); }
-
+.timer-name { flex: 1; min-width: 0; text-align: right; color: var(--muted); font-size: .95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .stats { width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
 .stat { background: var(--surface); border-radius: 12px; padding: 9px 6px; text-align: center; }
 .stat-label { display: block; font-size: .65rem; letter-spacing: .12em; color: var(--muted); margin-bottom: 2px; }
 .stat-value { font-size: 1.2rem; font-weight: 600; font-variant-numeric: tabular-nums; }
 .stat-value small { color: var(--muted); font-weight: 400; font-size: .9rem; }
-
 .overall { width: 100%; height: 5px; background: var(--surface-2); border-radius: 3px; margin-top: 12px; overflow: hidden; }
 #overall-bar { height: 100%; width: 0; background: var(--green); border-radius: 3px; transition: width .2s linear; }
-
 .timer-wrap { flex: 1; width: 100%; min-height: 0; display: grid; place-items: center; }
 .timer-container {
     position: relative; width: min(82vw, 100%, 42dvh, 420px); aspect-ratio: 1;
@@ -80,20 +118,14 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--blue); outl
 .inner-ui { position: relative; text-align: center; width: 78%; }
 #phase-label { font-size: .7rem; letter-spacing: .25em; color: var(--muted); }
 #current-title {
-    margin: 6px 0 2px; font-size: clamp(1.1rem, 5vw, 1.7rem); font-weight: 500;
-    line-height: 1.25; min-height: 2.5em; display: flex; align-items: center; justify-content: center;
-    word-break: break-word;
+    margin: 6px 0 2px; font-size: clamp(1.1rem, 5vw, 1.7rem); font-weight: 500; line-height: 1.25;
+    min-height: 2.5em; display: flex; align-items: center; justify-content: center; word-break: break-word;
 }
-#time-display {
-    font-size: clamp(3.8rem, 17vw, 6.8rem); font-weight: 200; line-height: 1;
-    font-variant-numeric: tabular-nums;
-}
-
+#time-display { font-size: clamp(3.8rem, 17vw, 6.8rem); font-weight: 200; line-height: 1; font-variant-numeric: tabular-nums; }
 .controls { display: flex; align-items: center; justify-content: center; gap: 14px; width: 100%; }
 .side-btn {
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
-    width: 68px; height: 68px; border-radius: 50%;
-    background: var(--surface); border: 1px solid var(--border);
+    width: 68px; height: 68px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border);
     font-size: .62rem; letter-spacing: .1em; color: var(--muted);
 }
 .side-btn svg { width: 22px; height: 22px; fill: var(--text); }
@@ -108,39 +140,8 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--blue); outl
 #next-up { margin-top: 14px; min-height: 1.4em; font-size: .9rem; color: var(--muted); text-align: center; }
 #next-up b { color: var(--text); font-weight: 500; }
 
-/* ===== オーバーレイ共通 ===== */
-.overlay {
-    position: fixed; inset: 0; z-index: 200; display: flex;
-    background: rgba(0,0,0,.62); align-items: flex-end; justify-content: center;
-    opacity: 0; visibility: hidden;
-    transition: opacity .26s ease, visibility 0s linear .26s;
-}
-.overlay.open { opacity: 1; visibility: visible; transition: opacity .26s ease, visibility 0s; }
-.sheet {
-    width: 100%; max-width: 560px; max-height: 85dvh; overflow-y: auto;
-    background: var(--card); border-radius: 28px 28px 0 0;
-    padding: 18px 18px max(22px, env(safe-area-inset-bottom));
-    transform: translateY(100%);
-    transition: transform .28s cubic-bezier(.2, .8, .2, 1);
-}
-.overlay.open .sheet { transform: none; }
-.sheet h3 { margin: 0 0 14px; font-size: 1rem; }
-.sheet .row { display: flex; gap: 8px; margin-top: 10px; }
-.sheet textarea { width: 100%; min-height: 96px; resize: vertical; font-size: .8rem; word-break: break-all; }
-.note { font-size: .78rem; color: var(--muted); line-height: 1.5; margin: 8px 0 0; }
-.btn {
-    flex: 1; padding: 13px 14px; border-radius: 10px; font-weight: 600; font-size: .95rem;
-    background: var(--surface-2); border: 1px solid var(--border);
-}
-.btn.primary { background: var(--blue); color: #06121f; border-color: transparent; }
-.btn.danger { color: var(--red); }
-.btn.armed { background: var(--red); color: #1c0606; }
-
 /* ===== ルーティーン一覧ページ ===== */
-.page {
-    position: fixed; inset: 0; z-index: 150; display: none;
-    background: var(--bg); overflow-y: auto;
-}
+.page { position: fixed; inset: 0; z-index: 150; display: none; background: var(--bg); overflow-y: auto; }
 .page.open { display: block; }
 .page-inner { max-width: 560px; margin: 0 auto; padding: 0 18px max(28px, env(safe-area-inset-bottom)); }
 .page-head {
@@ -152,16 +153,11 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--blue); outl
 .page-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 6px 0 24px; }
 .page-actions button {
     display: flex; align-items: center; justify-content: center; gap: 10px;
-    height: 54px; border-radius: 14px; background: var(--card);
-    font-size: 1rem; font-weight: 600;
+    height: 54px; border-radius: 14px; background: var(--card); font-size: 1rem; font-weight: 600;
 }
 .page-actions svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .page-sub { font-size: .95rem; color: var(--muted); margin: 0 0 12px 2px; }
-
-.rc {
-    background: var(--card); border-radius: 18px; padding: 16px;
-    margin-bottom: 14px; border: 1px solid transparent;
-}
+.rc { background: var(--card); border-radius: 18px; padding: 16px; margin-bottom: 14px; border: 1px solid transparent; }
 .rc.active { border-color: rgba(52, 211, 153, .4); }
 .rc-top { display: flex; align-items: center; gap: 6px; }
 .rc-title { flex: 1; min-width: 0; display: flex; align-items: baseline; }
@@ -170,16 +166,12 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--blue); outl
     font-size: 1.32rem; font-weight: 700; line-height: 1.3;
 }
 .rc-time { flex: none; white-space: nowrap; margin-left: .45em; font-size: 1.1rem; font-weight: 500; color: #c3c7d1; }
-.rc-more {
-    flex: none; width: 44px; height: 44px; margin: -6px -8px -6px 0;
-    display: grid; place-items: center; border-radius: 50%; color: var(--muted);
-}
+.rc-more { flex: none; width: 44px; height: 44px; margin: -6px -8px -6px 0; display: grid; place-items: center; border-radius: 50%; color: var(--muted); }
 .rc-more svg { width: 24px; height: 24px; fill: currentColor; }
 .rc-more:active { background: var(--surface-2); }
 .rc-preview {
     margin: 6px 0 0; font-size: .95rem; line-height: 1.5; color: #8b91a0;
-    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-    word-break: break-word;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word;
 }
 .rc-start {
     display: block; width: 100%; height: 50px; margin-top: 16px; border-radius: 12px;
@@ -187,90 +179,84 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--blue); outl
 }
 .rc-start:active:not(:disabled) { transform: scale(.985); }
 
-/* ===== 三点メニュー (ボトムシート) ===== */
+/* ===== オーバーレイ / ボトムシート ===== */
+.overlay {
+    position: fixed; inset: 0; z-index: 200; display: flex;
+    background: rgba(0,0,0,.62); align-items: flex-end; justify-content: center;
+    opacity: 0; visibility: hidden; transition: opacity .26s ease, visibility 0s linear .26s;
+}
+.overlay.open { opacity: 1; visibility: visible; transition: opacity .26s ease, visibility 0s; }
+#sheet-picker { z-index: 210; }
+.sheet {
+    width: 100%; max-width: 560px; max-height: 88dvh; overflow-y: auto;
+    background: var(--card); border-radius: 28px 28px 0 0;
+    padding: 18px 18px max(22px, env(safe-area-inset-bottom));
+    transform: translateY(100%); transition: transform .28s cubic-bezier(.2, .8, .2, 1);
+}
+.overlay.open .sheet { transform: none; }
+.sheet h3 { margin: 0 0 16px; font-size: 1.05rem; text-align: center; }
+.sheet .row { display: flex; gap: 10px; margin-top: 16px; }
+.sheet textarea { min-height: 96px; resize: vertical; font-size: .8rem; word-break: break-all; }
+.note { font-size: .78rem; color: var(--muted); line-height: 1.5; margin: 8px 0 0; }
 .grabber { width: 44px; height: 5px; border-radius: 3px; background: #4a4f5b; margin: -6px auto 14px; }
 .act-title {
-    text-align: center; font-size: 1rem; padding-bottom: 16px;
-    border-bottom: 1px solid var(--border); margin-bottom: 14px;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    text-align: center; font-size: 1rem; padding-bottom: 16px; border-bottom: 1px solid var(--border);
+    margin-bottom: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .act-list { background: var(--surface-2); border-radius: 16px; overflow: hidden; }
-.act-row {
-    width: 100%; height: 62px; display: flex; align-items: center; gap: 16px;
-    padding: 0 18px; font-size: 1.02rem; text-align: left;
-}
+.act-row { width: 100%; height: 62px; display: flex; align-items: center; gap: 16px; padding: 0 18px; font-size: 1.02rem; text-align: left; }
 .act-row + .act-row { border-top: 1px solid var(--border); }
 .act-row svg { width: 24px; height: 24px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.act-row:active:not(:disabled) { background: rgba(255,255,255,.05); }
+.act-row:hover:not(:disabled), .act-row:active:not(:disabled) { background: rgba(255,255,255,.05); }
 .act-row.danger { color: var(--red); }
 .act-sheet { padding-bottom: max(34px, calc(env(safe-area-inset-bottom) + 18px)); }
 
-/* ===== 設定パネル ===== */
-.settings-panel {
-    position: fixed; inset: 0; z-index: 100; display: none;
-    background: var(--bg); overflow-y: auto;
+/* ===== 種目の追加・編集フォーム ===== */
+.field { margin-bottom: 16px; }
+.field-label { display: block; font-size: .8rem; color: var(--muted); margin: 0 0 7px 2px; }
+.val-btn {
+    width: 100%; display: flex; align-items: center; gap: 10px; text-align: left;
+    padding: 15px 16px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border);
 }
-.settings-panel.open { display: block; }
-.settings-inner { max-width: 480px; margin: 0 auto; padding: 0 18px max(30px, env(safe-area-inset-bottom)); }
-.settings-head {
-    position: sticky; top: 0; z-index: 5; background: var(--bg);
-    display: flex; align-items: center; justify-content: space-between;
-    padding: max(14px, env(safe-area-inset-top)) 0 12px;
+.vb-l { flex: 1; font-size: .95rem; color: #c3c7d1; }
+.vb-v { font-size: 1.15rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.vb-c { color: var(--muted); font-size: 1.3rem; line-height: 1; }
+.num-row { display: flex; align-items: center; gap: 10px; }
+.num-row input { width: 130px; font-variant-numeric: tabular-nums; }
+.num-row .unit { color: var(--muted); }
+.num-row .hint { color: var(--muted); font-size: .85rem; }
+.seg { position: relative; display: grid; grid-template-columns: 1fr 1fr; background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 3px; }
+.seg input { position: absolute; opacity: 0; pointer-events: none; width: 1px; height: 1px; }
+.seg label { display: block; text-align: center; padding: 11px 6px; border-radius: 9px; font-size: .92rem; color: var(--muted); cursor: pointer; }
+.seg input:checked + label { background: #2d313c; color: var(--text); font-weight: 600; }
+.seg input:focus-visible + label { outline: 2px solid var(--blue); }
+
+/* ===== ダイアル式ピッカー (iPhone) ===== */
+.wheels { position: relative; display: flex; justify-content: center; gap: 34px; height: 240px; margin: 4px 0 6px; }
+.wheel-col { display: flex; align-items: center; gap: 8px; }
+.wheel {
+    height: 240px; width: 92px; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none;
+    -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+    -webkit-mask-image: linear-gradient(transparent, #000 30%, #000 70%, transparent);
+    mask-image: linear-gradient(transparent, #000 30%, #000 70%, transparent);
 }
-.settings-head h2 { margin: 0; font-size: 1.1rem; letter-spacing: .12em; }
-.block { background: var(--surface); border-radius: 16px; padding: 16px; margin-bottom: 14px; }
-.block-title { font-size: .7rem; letter-spacing: .18em; color: var(--muted); margin: 0 0 12px; }
-.block input[type="text"], .block select { width: 100%; }
-.btn-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
-.btn-grid .btn { padding: 11px 6px; font-size: .85rem; }
-
-.slider-wrapper { display: flex; align-items: center; gap: 16px; }
-.slider-wrapper input[type="range"] { flex: 1; }
-.value-display { min-width: 64px; text-align: right; font-variant-numeric: tabular-nums; }
-#wait-val-display { font-size: 2rem; font-weight: 200; color: var(--amber); }
-.value-display .unit { color: var(--muted); margin-left: 3px; }
-
-input[type="range"] { -webkit-appearance: none; appearance: none; height: 28px; background: transparent; padding: 0; border: none; }
-input[type="range"]::-webkit-slider-runnable-track { height: 4px; background: var(--border); border-radius: 2px; }
-input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; margin-top: -9px;
-    background: var(--amber); box-shadow: 0 0 10px rgba(251,191,36,.35);
+.wheel::-webkit-scrollbar { display: none; }
+.wheel-pad { height: 96px; }
+.wheel-item {
+    height: 48px; display: flex; align-items: center; justify-content: center; scroll-snap-align: center;
+    font-size: 1.4rem; color: #5b6070; font-variant-numeric: tabular-nums; cursor: pointer;
 }
-input[type="range"]::-moz-range-track { height: 4px; background: var(--border); border-radius: 2px; }
-input[type="range"]::-moz-range-thumb { width: 22px; height: 22px; border: none; border-radius: 50%; background: var(--amber); }
-
-.stepper { display: flex; align-items: stretch; gap: 8px; margin: 10px 0; }
-.stepper button { width: 52px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); font-size: 1.2rem; }
-.stepper input { flex: 1; min-width: 0; text-align: center; font-size: 1.4rem; font-weight: 300; }
-.stepper .unit { align-self: center; color: var(--muted); }
-.chips { display: flex; gap: 6px; margin-bottom: 10px; }
-.chips button { flex: 1; padding: 8px 0; border-radius: 8px; background: var(--surface-2); font-size: .85rem; color: var(--muted); }
-.chips button.on { background: var(--blue); color: #06121f; font-weight: 700; }
-.add-fields { display: grid; gap: 10px; }
-
-.list-summary { font-size: .8rem; color: var(--muted); margin: 0 0 10px; }
-.list-item {
-    display: flex; align-items: center; gap: 8px; background: var(--surface-2);
-    margin-bottom: 8px; padding: 8px 8px 8px 6px; border-radius: 12px;
+.wheel-item.sel { color: var(--text); font-size: 2.5rem; font-weight: 600; }
+.wheel-unit { font-size: 1rem; color: var(--muted); }
+.wheel-band {
+    position: absolute; left: 0; right: 0; top: 96px; height: 48px; pointer-events: none;
+    border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: rgba(255,255,255,.03);
 }
-.mv { display: flex; flex-direction: column; }
-.mv button { width: 34px; height: 24px; color: var(--muted); font-size: .8rem; }
-.mv button:disabled { opacity: .2; }
-.item-info { flex: 1; min-width: 0; padding: 6px 4px; cursor: pointer; }
-.item-info strong { font-weight: 600; }
-.item-sub { color: var(--muted); font-size: .85rem; margin-left: 6px; }
-.remove-btn { width: 40px; height: 40px; color: var(--red); font-size: 1.1rem; }
-.list-item.editing { flex-direction: column; align-items: stretch; gap: 10px; padding: 12px; border: 1px solid var(--blue); }
-.edit-row { display: flex; gap: 8px; align-items: center; }
-.edit-row input[type="text"] { flex: 1; min-width: 0; }
-.edit-row input[type="number"] { width: 90px; }
-.edit-row select { flex: 1; }
-.edit-row .unit { color: var(--muted); }
 
 #toast {
     position: fixed; left: 50%; top: max(70px, calc(env(safe-area-inset-top) + 56px)); transform: translateX(-50%) translateY(-12px);
     background: #fff; color: #000; padding: 10px 18px; border-radius: 999px; font-size: .9rem; font-weight: 600;
-    opacity: 0; pointer-events: none; transition: .2s; z-index: 500; white-space: nowrap;
+    opacity: 0; pointer-events: none; transition: .2s; z-index: 500; max-width: 90vw; text-align: center;
 }
 #toast.show { opacity: 1; transform: translateX(-50%); }
 
@@ -280,16 +266,54 @@ input[type="range"]::-moz-range-thumb { width: 22px; height: 22px; border: none;
     .side-btn, #main-btn { height: 56px; }
     .side-btn { width: 56px; }
 }
+/* Mac (マウス・キーボード): ボトムシートの代わりに中央のダイアログ */
+@media (min-width: 700px) and (pointer: fine) {
+    .overlay { align-items: center; }
+    .sheet {
+        max-width: 520px; border-radius: 20px; padding-bottom: 22px;
+        transform: translateY(14px) scale(.98); opacity: 0;
+        transition: transform .2s ease, opacity .2s ease;
+    }
+    .overlay.open .sheet { transform: none; opacity: 1; }
+    .grabber { display: none; }
+    .act-sheet { padding-bottom: 22px; }
+}
 </style>
 </head>
 <body>
 
-<div class="app">
-    <header class="top">
-        <button class="chip" id="routine-chip"><span id="routine-name">-</span><span class="caret">▼</span></button>
-        <button class="icon-btn" id="open-settings" aria-label="設定">
-            <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+<!-- ================= 編集画面（起動時） ================= -->
+<div class="view" id="editor-view">
+  <div class="ed-inner">
+    <div class="ed-head">
+        <button class="pill" id="open-list">
+            <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>ルーティーン
         </button>
+        <button class="pill start" id="ed-start">
+            <svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg>開始
+        </button>
+    </div>
+
+    <p class="ed-label">ルーティーン名</p>
+    <input type="text" id="set-routine-name" class="name-input" placeholder="ルーティーン名" maxlength="30" aria-label="ルーティーン名">
+
+    <div class="list-head">
+        <h2>種目</h2>
+        <span id="list-summary"></span>
+    </div>
+    <div id="item-list"></div>
+    <button class="add-btn" id="add-open">種目を追加</button>
+  </div>
+</div>
+
+<!-- ================= タイマー画面 ================= -->
+<div class="view hidden" id="timer-view" style="overflow:hidden">
+ <div class="app">
+    <header class="top">
+        <button class="pill" id="back-btn">
+            <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>編集
+        </button>
+        <span class="timer-name" id="routine-name">-</span>
     </header>
 
     <section class="stats">
@@ -323,67 +347,10 @@ input[type="range"]::-moz-range-thumb { width: 22px; height: 22px; border: none;
         </button>
     </div>
     <div id="next-up"></div>
+ </div>
 </div>
 
-<!-- 設定 -->
-<div class="settings-panel" id="panel">
-  <div class="settings-inner">
-    <div class="settings-head">
-        <h2>MENU</h2>
-        <button class="btn" style="flex:none;padding:9px 18px" id="close-settings">閉じる</button>
-    </div>
-
-    <div class="block">
-        <p class="block-title">ROUTINE</p>
-        <input type="text" id="set-routine-name" placeholder="ルーティーン名" maxlength="30">
-        <div class="btn-grid">
-            <button class="btn" id="btn-new">＋ 新規</button>
-            <button class="btn" id="btn-dup">複製</button>
-            <button class="btn danger" id="btn-del">削除</button>
-            <button class="btn" id="btn-share">共有</button>
-            <button class="btn" id="btn-import">取り込み</button>
-            <button class="btn" id="btn-switch">切り替え</button>
-        </div>
-    </div>
-
-    <div class="block">
-        <p class="block-title">INTERVAL（種目間の休憩）</p>
-        <div class="slider-wrapper">
-            <input type="range" id="wait-sec-input" min="0" max="30" value="5">
-            <div class="value-display"><span id="wait-val-display">5</span><span class="unit">s</span></div>
-        </div>
-    </div>
-
-    <div class="block">
-        <p class="block-title">ADD STRETCH</p>
-        <div class="add-fields">
-            <input type="text" id="new-name" placeholder="種目名" maxlength="40">
-            <div>
-                <div class="chips" id="dur-chips"></div>
-                <div class="stepper">
-                    <button id="dur-minus" aria-label="-5秒">−5</button>
-                    <input type="number" id="dur-input" min="1" max="3600" inputmode="numeric" value="30">
-                    <span class="unit">秒</span>
-                    <button id="dur-plus" aria-label="+5秒">+5</button>
-                </div>
-            </div>
-            <select id="side-type">
-                <option value="both">1セット (両方)</option>
-                <option value="single">2セット (左右交互)</option>
-            </select>
-            <button class="btn primary" id="add-btn">追加</button>
-        </div>
-    </div>
-
-    <div class="block">
-        <p class="block-title">LIST（タップで編集）</p>
-        <p class="list-summary" id="list-summary"></p>
-        <div id="item-list"></div>
-    </div>
-  </div>
-</div>
-
-<!-- ルーティーン一覧 -->
+<!-- ================= ルーティーン一覧 ================= -->
 <div class="page" id="routines-page">
   <div class="page-inner">
     <div class="page-head">
@@ -405,28 +372,76 @@ input[type="range"]::-moz-range-thumb { width: 22px; height: 22px; border: none;
   </div>
 </div>
 
-<!-- 三点メニュー -->
+<!-- ルーティーンの三点メニュー -->
 <div class="overlay" id="sheet-actions">
   <div class="sheet act-sheet">
     <div class="grabber"></div>
     <div class="act-title" id="act-title"></div>
     <div class="act-list">
         <button class="act-row" id="act-share">
-            <svg viewBox="0 0 24 24"><path d="M12 15V4M8 8l4-4 4 4M5 13v6h14v-6"/></svg>
-            <span>ルーティーンを共有</span>
+            <svg viewBox="0 0 24 24"><path d="M12 15V4M8 8l4-4 4 4M5 13v6h14v-6"/></svg><span>ルーティーンを共有</span>
         </button>
         <button class="act-row" id="act-dup">
-            <svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6.5A2.5 2.5 0 0 0 13.5 4h-7A2.5 2.5 0 0 0 4 6.5v7A2.5 2.5 0 0 0 6.5 16H8"/></svg>
-            <span>複製</span>
+            <svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6.5A2.5 2.5 0 0 0 13.5 4h-7A2.5 2.5 0 0 0 4 6.5v7A2.5 2.5 0 0 0 6.5 16H8"/></svg><span>複製</span>
         </button>
         <button class="act-row" id="act-edit">
-            <svg viewBox="0 0 24 24"><path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19l-4 1zM14.5 6.5l3 3"/></svg>
-            <span>編集</span>
+            <svg viewBox="0 0 24 24"><path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19l-4 1zM14.5 6.5l3 3"/></svg><span>編集</span>
         </button>
         <button class="act-row danger" id="act-del">
-            <svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5 5 19"/></svg>
-            <span>削除</span>
+            <svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5 5 19"/></svg><span>削除</span>
         </button>
+    </div>
+  </div>
+</div>
+
+<!-- 種目の三点メニュー -->
+<div class="overlay" id="sheet-item-actions">
+  <div class="sheet act-sheet">
+    <div class="grabber"></div>
+    <div class="act-title" id="ia-title"></div>
+    <div class="act-list">
+        <button class="act-row" id="ia-edit">
+            <svg viewBox="0 0 24 24"><path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19l-4 1zM14.5 6.5l3 3"/></svg><span>編集</span>
+        </button>
+        <button class="act-row" id="ia-up">
+            <svg viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg><span>上へ移動</span>
+        </button>
+        <button class="act-row" id="ia-down">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></svg><span>下へ移動</span>
+        </button>
+        <button class="act-row danger" id="ia-del">
+            <svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5 5 19"/></svg><span>削除</span>
+        </button>
+    </div>
+  </div>
+</div>
+
+<!-- 種目の追加・編集 -->
+<div class="overlay" id="sheet-item" data-nobackdrop>
+  <div class="sheet">
+    <div class="grabber"></div>
+    <h3 id="item-sheet-title">種目を追加</h3>
+    <div id="item-form"></div>
+    <div class="row">
+        <button class="btn" id="item-cancel">キャンセル</button>
+        <button class="btn primary" id="item-save">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 秒数ピッカー (iPhone) -->
+<div class="overlay" id="sheet-picker" data-nobackdrop>
+  <div class="sheet">
+    <div class="grabber"></div>
+    <h3 id="picker-title">実施時間</h3>
+    <div class="wheels">
+        <div class="wheel-col"><div class="wheel" id="wheel-min"></div><span class="wheel-unit">分</span></div>
+        <div class="wheel-col"><div class="wheel" id="wheel-sec"></div><span class="wheel-unit">秒</span></div>
+        <div class="wheel-band"></div>
+    </div>
+    <div class="row">
+        <button class="btn" id="picker-cancel">キャンセル</button>
+        <button class="btn primary" id="picker-ok">完了</button>
     </div>
   </div>
 </div>
@@ -434,13 +449,14 @@ input[type="range"]::-moz-range-thumb { width: 22px; height: 22px; border: none;
 <!-- 共有 -->
 <div class="overlay" id="sheet-share">
   <div class="sheet">
+    <div class="grabber"></div>
     <h3>ルーティーンを共有</h3>
     <textarea id="share-code" readonly></textarea>
     <div class="row">
         <button class="btn primary" id="copy-code">コードをコピー</button>
         <button class="btn" id="copy-link">リンクをコピー</button>
     </div>
-    <div class="row"><button class="btn" id="native-share">他のアプリで送る…</button></div>
+    <div class="row" style="margin-top:10px"><button class="btn" id="native-share">他のアプリで送る…</button></div>
     <p class="note">別の端末の「取り込み」にコードを貼り付けると同じルーティーンが使えます。リンクは、このページがウェブ上のURLで開かれているときに、他の端末でそのまま取り込めます。</p>
   </div>
 </div>
@@ -448,6 +464,7 @@ input[type="range"]::-moz-range-thumb { width: 22px; height: 22px; border: none;
 <!-- 取り込み -->
 <div class="overlay" id="sheet-import-box">
   <div class="sheet">
+    <div class="grabber"></div>
     <h3>ルーティーンを取り込む</h3>
     <textarea id="import-text" placeholder="共有コード、または共有リンクを貼り付け"></textarea>
     <p class="note" id="import-preview"></p>
@@ -464,27 +481,49 @@ input[type="range"]::-moz-range-thumb { width: 22px; height: 22px; border: none;
 (() => {
 'use strict';
 const $ = id => document.getElementById(id);
+const el = (tag, cls, text) => {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+};
 const KEY = 'stretch_v2';
+const LIMITS = { time: [1, 3600], rest: [0, 60] };   // 秒
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const isCoarse = () => window.matchMedia('(pointer: coarse)').matches;  // iPhone / iPad → ダイアル式、Mac → 数値入力
 
 /* ================= データ ================= */
 function uid() { return Math.random().toString(36).slice(2, 9); }
 
+// 旧データ(ルーティーン共通のwait)を、各種目のrestへ引き継ぐ
+function normRoutine(r, fallbackWait) {
+    const w = typeof r.wait === 'number' ? r.wait : fallbackWait;
+    r.items = (Array.isArray(r.items) ? r.items : []).map(s => ({
+        name: String(s.name || '').slice(0, 40),
+        time: clamp(parseInt(s.time) || 30, LIMITS.time[0], LIMITS.time[1]),
+        type: s.type === 'single' ? 'single' : 'both',
+        rest: typeof s.rest === 'number' ? clamp(s.rest, LIMITS.rest[0], LIMITS.rest[1]) : clamp(w, LIMITS.rest[0], LIMITS.rest[1])
+    })).filter(s => s.name);
+    delete r.wait;
+    r.name = String(r.name || 'ルーティーン').slice(0, 30);
+    return r;
+}
 function load() {
     try {
         const s = JSON.parse(localStorage.getItem(KEY));
         if (s && Array.isArray(s.routines) && s.routines.length) {
+            s.routines.forEach(r => normRoutine(r, 5));
             if (!s.routines.some(r => r.id === s.activeId)) s.activeId = s.routines[0].id;
             return s;
         }
     } catch (e) {}
-    // 旧バージョン(stretch_data / wait_time)からの移行
     let items = null, wait = 5;
     try { items = JSON.parse(localStorage.getItem('stretch_data')); } catch (e) {}
     try { const w = parseInt(localStorage.getItem('wait_time')); if (!isNaN(w)) wait = w; } catch (e) {}
-    const r = {
-        id: uid(), name: 'マイルーティーン', wait,
+    const r = normRoutine({
+        id: uid(), name: 'マイルーティーン',
         items: (items && items.length) ? items : [{ name: 'ハム', time: 30, type: 'both' }]
-    };
+    }, wait);
     return { routines: [r], activeId: r.id };
 }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
@@ -493,27 +532,34 @@ let state = load();
 let queue = [];
 const cur = () => state.routines.find(r => r.id === state.activeId) || state.routines[0];
 
-function rebuild() {
-    queue = [];
-    cur().items.forEach(s => {
+// 種目 → 実行ステップ。休憩(rest)は「そのステップの後、次へ進む前」
+function stepsOf(items) {
+    const q = [];
+    items.forEach(s => {
         if (s.type === 'single') {
-            queue.push({ name: s.name + ' (左)', time: s.time });
-            queue.push({ name: s.name + ' (右)', time: s.time });
+            q.push({ name: s.name + ' (左)', time: s.time, rest: s.rest });
+            q.push({ name: s.name + ' (右)', time: s.time, rest: s.rest });
         } else {
-            queue.push({ name: s.name, time: s.time });
+            q.push({ name: s.name, time: s.time, rest: s.rest });
         }
     });
+    return q;
 }
-const routineTotalSec = r => {
-    const steps = r.items.reduce((n, s) => n + (s.type === 'single' ? 2 : 1), 0);
-    const t = r.items.reduce((n, s) => n + s.time * (s.type === 'single' ? 2 : 1), 0);
-    return t + r.wait * Math.max(0, steps - 1);
-};
+function rebuild() { queue = stepsOf(cur().items); }
+function routineTotalSec(r) {
+    const q = stepsOf(r.items);
+    return q.reduce((a, s) => a + s.time, 0) + q.slice(0, -1).reduce((a, s) => a + s.rest, 0);
+}
 function fmt(sec) {
     sec = Math.max(0, Math.round(sec));
     const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
     const ss = String(s).padStart(2, '0');
     return h ? `${h}:${String(m).padStart(2, '0')}:${ss}` : `${m}:${ss}`;
+}
+function fmtJa(sec) {
+    sec = Math.max(0, Math.round(sec));
+    const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
+    return (h ? `${h}時間` : '') + (m ? `${m}分` : '') + (s || !(h || m) ? `${s}秒` : '');
 }
 
 /* ================= 音・バイブ・画面スリープ防止 ================= */
@@ -554,20 +600,18 @@ circle.style.strokeDasharray = `${CIRC} ${CIRC}`;
 let phase = 'idle';          // idle | work | wait | done
 let idx = 0, elapsed = 0, last = 0, running = false, timerId = null, lastTickKey = '';
 
+// wait は「直前のステップの休憩」
 const dur = () => phase === 'work' ? queue[idx].time * 1000
-               : phase === 'wait' ? cur().wait * 1000 : 0;
+               : phase === 'wait' ? queue[idx - 1].rest * 1000 : 0;
+const nextPhase = () => queue[idx - 1].rest > 0 ? 'wait' : 'work';
 
 function startLoop() {
     running = true; last = performance.now();
     clearInterval(timerId); timerId = setInterval(tick, 50);
     requestWake();
 }
-function stopLoop() {
-    running = false; clearInterval(timerId); timerId = null; releaseWake();
-}
-function resetTimer() {
-    stopLoop(); phase = 'idle'; idx = 0; elapsed = 0; lastTickKey = '';
-}
+function stopLoop() { running = false; clearInterval(timerId); timerId = null; releaseWake(); }
+function resetTimer() { stopLoop(); phase = 'idle'; idx = 0; elapsed = 0; lastTickKey = ''; }
 function finish() {
     stopLoop(); phase = 'done'; elapsed = 0;
     beep(1000, 0.5); vibrate([300, 100, 300, 100, 300]);
@@ -576,7 +620,7 @@ function cue() { beep(800, 0.2); vibrate([200, 100, 200]); }
 
 function advance() {
     if (phase === 'work') {
-        if (idx + 1 < queue.length) { idx++; phase = cur().wait > 0 ? 'wait' : 'work'; cue(); }
+        if (idx + 1 < queue.length) { idx++; phase = nextPhase(); cue(); }
         else finish();
     } else if (phase === 'wait') {
         phase = 'work'; cue();
@@ -594,7 +638,6 @@ function tick() {
     }
     renderTimer();
 }
-
 function toggle() {
     if (!queue.length) return;
     try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); actx.resume(); } catch (e) {}
@@ -606,7 +649,7 @@ function skip() {
     if (phase === 'idle' || phase === 'done') return;
     elapsed = 0;
     if (phase === 'wait') { phase = 'work'; }
-    else if (idx + 1 < queue.length) { idx++; phase = cur().wait > 0 ? 'wait' : 'work'; }
+    else if (idx + 1 < queue.length) { idx++; phase = nextPhase(); }
     else { finish(); }
     if (running) last = performance.now();
     renderTimer();
@@ -621,13 +664,14 @@ function prev() {
 }
 
 function renderTimer() {
-    const n = queue.length, wait = cur().wait;
-    const totalMs = (queue.reduce((a, q) => a + q.time, 0) + wait * Math.max(0, n - 1)) * 1000;
-    const before = i => queue.slice(0, i).reduce((a, q) => a + q.time, 0) * 1000;
+    const n = queue.length;
+    const timeBefore = i => queue.slice(0, i).reduce((a, q) => a + q.time, 0) * 1000;
+    const restBefore = i => queue.slice(0, Math.max(0, i)).reduce((a, q) => a + q.rest, 0) * 1000;
+    const totalMs = timeBefore(n) + restBefore(n - 1);
 
     let completed = 0;
-    if (phase === 'work') completed = before(idx) + wait * 1000 * idx + elapsed;
-    else if (phase === 'wait') completed = before(idx) + wait * 1000 * (idx - 1) + elapsed;
+    if (phase === 'work') completed = timeBefore(idx) + restBefore(idx) + elapsed;
+    else if (phase === 'wait') completed = timeBefore(idx) + restBefore(idx - 1) + elapsed;
     else if (phase === 'done') completed = totalMs;
 
     $('st-count').textContent = n;
@@ -635,17 +679,18 @@ function renderTimer() {
     $('st-total').textContent = fmt(totalMs / 1000);
     $('st-remain').textContent = fmt(Math.ceil((totalMs - completed) / 1000));
     $('overall-bar').style.width = (totalMs ? Math.min(100, completed / totalMs * 100) : 0) + '%';
+    $('routine-name').textContent = cur().name || '(無題)';
 
     const title = $('current-title'), label = $('phase-label'), next = $('next-up');
     const btn = $('main-btn');
     let ringColor = 'var(--green)', offset = 0, shown = 0;
 
     if (!n) {
-        label.textContent = 'EMPTY'; title.textContent = '種目を追加してください';
+        label.textContent = 'EMPTY'; title.textContent = '種目がありません';
         $('time-display').textContent = '0.0'; next.textContent = '';
     } else if (phase === 'idle') {
         label.textContent = 'READY'; title.textContent = queue[0].name;
-        shown = queue[0].time; next.innerHTML = 'STARTで開始';
+        shown = queue[0].time; next.textContent = 'STARTで開始';
     } else if (phase === 'done') {
         label.textContent = 'DONE'; title.textContent = 'FINISH!';
         next.textContent = 'おつかれさまでした';
@@ -655,12 +700,13 @@ function renderTimer() {
         offset = CIRC - (d ? rem / d : 0) * CIRC;
         if (phase === 'wait') {
             ringColor = 'var(--amber)'; label.textContent = 'INTERVAL'; title.textContent = 'NEXT: ' + queue[idx].name;
-            next.innerHTML = 'SKIPで休憩を終了';
+            next.textContent = 'SKIPで休憩を終了';
         } else {
             label.textContent = 'STRETCH'; title.textContent = queue[idx].name;
             const nx = queue[idx + 1];
-            next.innerHTML = nx ? `次 <b></b>` : '最後の種目です';
-            if (nx) next.querySelector('b').textContent = `${nx.name} · ${nx.time}秒`;
+            next.textContent = '';
+            if (nx) { next.append('次 '); next.appendChild(el('b', null, `${nx.name} · ${nx.time}秒`)); }
+            else next.textContent = '最後の種目です';
         }
     }
     if (n) $('time-display').textContent = shown.toFixed(1);
@@ -674,193 +720,282 @@ function renderTimer() {
     $('skip-btn').disabled = !n || phase === 'idle' || phase === 'done';
 }
 
-/* ================= 画面更新 ================= */
-function renderChip() { $('routine-name').textContent = cur().name || '(無題)'; }
-
-function mutate(fn) {
-    fn(); save(); resetTimer(); rebuild(); renderAll();
+/* ================= 画面切り替え ================= */
+function showView(v) {
+    $('editor-view').classList.toggle('hidden', v !== 'editor');
+    $('timer-view').classList.toggle('hidden', v !== 'timer');
 }
-function renderAll() { renderChip(); renderSettings(); renderTimer(); renderRoutinePage(); }
+function startFromEditor() {
+    if (!queue.length) { toast('種目を追加してください'); return; }
+    resetTimer(); showView('timer'); toggle();
+}
+function backToEditor() { resetTimer(); showView('editor'); renderTimer(); }
 
-function renderSettings() {
+function mutate(fn) { fn(); save(); resetTimer(); rebuild(); renderAll(); }
+function renderAll() { renderEditor(); renderTimer(); renderRoutinePage(); }
+function activate(id) { state.activeId = id; save(); resetTimer(); rebuild(); renderAll(); }
+
+/* ================= 編集画面 ================= */
+const SVG_MORE = '<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg>';
+
+function itemSub(s) {
+    return [fmtJa(s.time), s.type === 'single' ? '左右' : '両方', s.rest > 0 ? `休憩${fmtJa(s.rest)}` : '休憩なし'].join(' · ');
+}
+let dragFrom = -1;
+function renderEditor() {
     const r = cur();
     if (document.activeElement !== $('set-routine-name')) $('set-routine-name').value = r.name;
-    $('wait-sec-input').value = r.wait;
-    $('wait-val-display').textContent = r.wait;
-    $('btn-del').disabled = state.routines.length <= 1;
-    renderList();
+    $('list-summary').textContent = r.items.length
+        ? `${r.items.length}種目 · ${queue.length}ステップ · 合計 ${fmt(routineTotalSec(r))}` : '';
+    $('ed-start').disabled = !r.items.length;
+
+    const list = $('item-list');
+    list.innerHTML = '';
+    if (!r.items.length) {
+        list.appendChild(el('div', 'empty', 'まだ種目がありません。下の「種目を追加」から、最初の種目を入れましょう。'));
+        return;
+    }
+    const fine = !isCoarse();
+    r.items.forEach((s, i) => {
+        const row = el('div', 'item');
+        const no = el('div', 'item-no', String(i + 1));
+        const body = el('div', 'item-body');
+        body.append(el('div', 'item-name', s.name), el('div', 'item-sub', itemSub(s)));
+        body.tabIndex = 0;
+        body.onclick = () => openItemSheet(i);
+        body.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openItemSheet(i); } };
+        const more = el('button', 'item-more');
+        more.innerHTML = SVG_MORE; more.setAttribute('aria-label', 'その他の操作');
+        more.onclick = () => openItemActions(i);
+        row.append(no, body, more);
+
+        if (fine) {   // Mac: ドラッグで並べ替え
+            row.draggable = true;
+            row.ondragstart = e => { dragFrom = i; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(i)); row.classList.add('dragging'); };
+            row.ondragend = () => { row.classList.remove('dragging'); };
+            row.ondragover = e => { e.preventDefault(); row.classList.add('drop-target'); };
+            row.ondragleave = () => row.classList.remove('drop-target');
+            row.ondrop = e => {
+                e.preventDefault(); row.classList.remove('drop-target');
+                if (dragFrom >= 0 && dragFrom !== i) moveTo(dragFrom, i);
+                dragFrom = -1;
+            };
+        }
+        list.appendChild(row);
+    });
+}
+function moveTo(from, to) {
+    const items = cur().items;
+    if (to < 0 || to >= items.length) return;
+    mutate(() => { const [m] = items.splice(from, 1); items.splice(to, 0, m); });
 }
 
-let editingIndex = -1;
-function renderList() {
-    const r = cur(), list = $('item-list');
-    list.innerHTML = '';
-    $('list-summary').textContent = r.items.length
-        ? `${r.items.length}種目 ・ ${queue.length}ステップ ・ 合計 ${fmt(routineTotalSec(r))}`
-        : 'まだ種目がありません';
-    let focusTarget = null;
+/* ===== 種目の三点メニュー ===== */
+let iaIdx = -1;
+function openItemActions(i) {
+    iaIdx = i;
+    const items = cur().items;
+    $('ia-title').textContent = items[i].name;
+    $('ia-up').disabled = i === 0;
+    $('ia-down').disabled = i === items.length - 1;
+    openSheet('sheet-item-actions');
+}
 
-    r.items.forEach((s, i) => {
-        if (i === editingIndex) {
-            const el = buildEditItem(s, i);
-            list.appendChild(el);
-            focusTarget = el.querySelector('input[type="text"]');
+/* ===== 種目の追加・編集 (iPhone: ボトムシート / Mac: ダイアログ) ===== */
+let editIdx = -1, draft = null, fields = {};
+function openItemSheet(i) {
+    editIdx = i;
+    const s = i >= 0 ? cur().items[i] : null;
+    draft = s ? { ...s } : { name: '', time: 30, type: 'both', rest: 5 };
+    $('item-sheet-title').textContent = s ? '種目を編集' : '種目を追加';
+    buildItemForm();
+    openSheet('sheet-item');
+    if (!isCoarse()) setTimeout(() => { fields.name.focus(); fields.name.select(); }, 60);
+}
+function buildItemForm() {
+    const box = $('item-form'); box.innerHTML = ''; fields = {};
+
+    const f1 = el('div', 'field');
+    const l1 = el('label', 'field-label', '種目名'); l1.htmlFor = 'f-name';
+    const ni = document.createElement('input');
+    ni.type = 'text'; ni.id = 'f-name'; ni.maxLength = 40; ni.placeholder = '例：ハムストリング'; ni.value = draft.name;
+    ni.oninput = () => { draft.name = ni.value; ni.classList.remove('invalid'); };
+    f1.append(l1, ni); fields.name = ni;
+
+    box.append(f1, secField('実施時間', 'time'), sideField(), secField('休憩（この種目のあと）', 'rest'));
+}
+function sideField() {
+    const wrap = el('div', 'field');
+    wrap.append(el('div', 'field-label', '左右設定'));
+    const seg = el('div', 'seg'); seg.setAttribute('role', 'radiogroup');
+    [['both', '両方 1セット'], ['single', '左右 各1セット']].forEach(([v, t]) => {
+        const r = document.createElement('input');
+        r.type = 'radio'; r.name = 'side'; r.id = 'f-side-' + v; r.value = v; r.checked = draft.type === v;
+        r.onchange = () => { draft.type = v; };
+        const l = el('label', null, t); l.htmlFor = r.id;
+        seg.append(r, l);
+    });
+    wrap.append(seg);
+    return wrap;
+}
+// 秒数入力: iPhoneはダイアル式ピッカー、Macは数値入力
+function secField(label, key) {
+    const [mn, mx] = LIMITS[key];
+    const wrap = el('div', 'field');
+    if (isCoarse()) {
+        const b = el('button', 'val-btn'); b.type = 'button';
+        const v = el('span', 'vb-v');
+        const paint = () => { v.textContent = (key === 'rest' && draft.rest === 0) ? 'なし' : fmtJa(draft[key]); };
+        paint();
+        b.append(el('span', 'vb-l', label), v, el('span', 'vb-c', '›'));
+        b.onclick = () => {
+            if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+            openPicker(label, draft[key], mn, mx, val => { draft[key] = val; paint(); });
+        };
+        wrap.append(b);
+        fields[key] = { get: () => draft[key], el: b };
+    } else {
+        const id = 'f-' + key;
+        const lab = el('label', 'field-label', label); lab.htmlFor = id;
+        const row = el('div', 'num-row');
+        const inp = document.createElement('input');
+        inp.type = 'number'; inp.id = id; inp.min = mn; inp.max = mx; inp.step = 1; inp.inputMode = 'numeric';
+        inp.value = draft[key];
+        const hint = el('span', 'hint');
+        const paint = () => { const n = parseInt(inp.value); hint.textContent = (!isNaN(n) && n >= 60) ? '＝ ' + fmtJa(n) : ''; };
+        inp.oninput = () => { inp.classList.remove('invalid'); paint(); };
+        inp.onfocus = () => inp.select();
+        inp.onmouseup = e => e.preventDefault();   // クリックで選択が解除されないように
+        paint();
+        row.append(inp, el('span', 'unit', '秒'), hint);
+        wrap.append(lab, row);
+        fields[key] = {
+            get: () => { const t = inp.value.trim(); return /^\d+$/.test(t) ? parseInt(t) : null; },
+            el: inp
+        };
+    }
+    return wrap;
+}
+function saveItem() {
+    const name = fields.name.value.trim();
+    if (!name) { fields.name.classList.add('invalid'); fields.name.focus(); return; }
+    const out = { name, type: draft.type };
+    for (const key of ['time', 'rest']) {
+        const [mn, mx] = LIMITS[key];
+        const v = fields[key].get();
+        if (v === null || v < mn || v > mx) {
+            fields[key].el.classList.add('invalid'); fields[key].el.focus();
+            toast(`${key === 'time' ? '実施時間' : '休憩'}は${mn}〜${mx}秒で入力してください`);
             return;
         }
-        const item = document.createElement('div');
-        item.className = 'list-item';
-
-        const mv = document.createElement('div');
-        mv.className = 'mv';
-        const up = document.createElement('button'); up.textContent = '▲'; up.disabled = i === 0; up.setAttribute('aria-label', '上へ');
-        const dn = document.createElement('button'); dn.textContent = '▼'; dn.disabled = i === r.items.length - 1; dn.setAttribute('aria-label', '下へ');
-        up.onclick = () => move(i, -1); dn.onclick = () => move(i, 1);
-        mv.append(up, dn);
-
-        const info = document.createElement('div');
-        info.className = 'item-info';
-        const st = document.createElement('strong'); st.textContent = s.name;
-        const sub = document.createElement('span'); sub.className = 'item-sub';
-        sub.textContent = `${s.time}秒${s.type === 'single' ? '・左右' : ''}`;
-        info.append(st, sub);
-        info.onclick = () => { editingIndex = i; renderList(); };
-
-        const rm = document.createElement('button');
-        rm.className = 'remove-btn'; rm.textContent = '✕'; rm.setAttribute('aria-label', '削除');
-        rm.onclick = () => { editingIndex = -1; mutate(() => r.items.splice(i, 1)); };
-
-        item.append(mv, info, rm);
-        list.appendChild(item);
-    });
-    if (focusTarget) { focusTarget.focus(); focusTarget.select(); }
-}
-function move(i, d) {
-    const items = cur().items, j = i + d;
-    if (j < 0 || j >= items.length) return;
-    editingIndex = -1;
-    mutate(() => { const [m] = items.splice(i, 1); items.splice(j, 0, m); });
+        out[key] = v;
+    }
+    closeSheet('sheet-item');
+    const adding = editIdx < 0;
+    mutate(() => { if (adding) cur().items.push(out); else cur().items[editIdx] = out; });
+    if (adding) requestAnimationFrame(() => $('add-open').scrollIntoView({ block: 'nearest', behavior: 'smooth' }));
 }
 
-function buildEditItem(s, i) {
-    const item = document.createElement('div');
-    item.className = 'list-item editing';
-
-    const nameRow = document.createElement('div'); nameRow.className = 'edit-row';
-    const nameInput = document.createElement('input');
-    nameInput.type = 'text'; nameInput.value = s.name; nameInput.placeholder = '種目名'; nameInput.maxLength = 40;
-    nameRow.appendChild(nameInput);
-
-    const timeRow = document.createElement('div'); timeRow.className = 'edit-row';
-    const timeInput = document.createElement('input');
-    timeInput.type = 'number'; timeInput.min = 1; timeInput.max = 3600; timeInput.inputMode = 'numeric'; timeInput.value = s.time;
-    const unit = document.createElement('span'); unit.className = 'unit'; unit.textContent = '秒';
-    const typeSelect = document.createElement('select');
-    typeSelect.innerHTML = '<option value="both">1セット (両方)</option><option value="single">2セット (左右交互)</option>';
-    typeSelect.value = s.type || 'both';
-    timeRow.append(timeInput, unit, typeSelect);
-
-    const btnRow = document.createElement('div'); btnRow.className = 'edit-row';
-    const saveBtn = document.createElement('button'); saveBtn.className = 'btn primary'; saveBtn.textContent = '保存';
-    const cancelBtn = document.createElement('button'); cancelBtn.className = 'btn'; cancelBtn.textContent = 'キャンセル';
-    btnRow.append(saveBtn, cancelBtn);
-
-    const doSave = () => {
-        const name = nameInput.value.trim();
-        const time = parseInt(timeInput.value);
-        if (!name) { nameInput.focus(); return; }
-        if (!time || time < 1) { timeInput.focus(); return; }
-        editingIndex = -1;
-        mutate(() => { cur().items[i] = { name, time: Math.min(3600, time), type: typeSelect.value }; });
+/* ===== ダイアル式ピッカー (iPhone) ===== */
+const ITEM_H = 48;
+let pickerCb = null, pickerRange = [0, 0];
+function fillWheel(w, n) {
+    w.innerHTML = '';
+    w.append(el('div', 'wheel-pad'));
+    for (let i = 0; i < n; i++) {
+        const it = el('div', 'wheel-item', String(i));
+        it.onclick = () => w.scrollTo({ top: i * ITEM_H, behavior: 'smooth' });
+        w.append(it);
+    }
+    w.append(el('div', 'wheel-pad'));
+}
+function markSel(w) {
+    const i = Math.round(w.scrollTop / ITEM_H);
+    w.querySelectorAll('.wheel-item').forEach((it, k) => it.classList.toggle('sel', k === i));
+}
+['wheel-min', 'wheel-sec'].forEach(id => {
+    const w = $(id);
+    w.addEventListener('scroll', () => {
+        if (!w._raf) w._raf = requestAnimationFrame(() => { w._raf = 0; markSel(w); });
+    }, { passive: true });
+});
+function openPicker(title, val, mn, mx, cb) {
+    pickerCb = cb; pickerRange = [mn, mx];
+    $('picker-title').textContent = title;
+    fillWheel($('wheel-min'), Math.floor(mx / 60) + 1);
+    fillWheel($('wheel-sec'), 60);
+    openSheet('sheet-picker');
+    const setPos = () => {
+        $('wheel-min').scrollTop = Math.floor(val / 60) * ITEM_H;
+        $('wheel-sec').scrollTop = (val % 60) * ITEM_H;
+        markSel($('wheel-min')); markSel($('wheel-sec'));
     };
-    const doCancel = () => { editingIndex = -1; renderList(); };
-    saveBtn.onclick = doSave; cancelBtn.onclick = doCancel;
-    [nameInput, timeInput].forEach(el => el.onkeydown = e => {
-        if (e.key === 'Enter') doSave();
-        if (e.key === 'Escape') doCancel();
-    });
-    item.append(nameRow, timeRow, btnRow);
-    return item;
+    setPos(); setTimeout(setPos, 60);
+}
+function commitPicker() {
+    const m = Math.round($('wheel-min').scrollTop / ITEM_H);
+    const s = Math.round($('wheel-sec').scrollTop / ITEM_H);
+    const v = clamp(m * 60 + s, pickerRange[0], pickerRange[1]);
+    closeSheet('sheet-picker');
+    if (pickerCb) pickerCb(v);
 }
 
-/* ================= オーバーレイ ================= */
+/* ================= オーバーレイ共通 ================= */
 const openSheet = id => $(id).classList.add('open');
 const closeSheet = id => $(id).classList.remove('open');
 document.querySelectorAll('.overlay').forEach(ov => {
-    ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('open'); });
+    ov.addEventListener('click', e => { if (e.target === ov && !ov.hasAttribute('data-nobackdrop')) ov.classList.remove('open'); });
     ov.querySelectorAll('[data-close]').forEach(b => b.onclick = () => ov.classList.remove('open'));
+});
+document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    for (const id of ['sheet-picker', 'sheet-item', 'sheet-share', 'sheet-import-box', 'sheet-item-actions', 'sheet-actions']) {
+        if ($(id).classList.contains('open')) { closeSheet(id); return; }
+    }
+    if ($('routines-page').classList.contains('open')) closePage();
 });
 
 let toastTimer;
 function toast(msg) {
     const t = $('toast'); t.textContent = msg; t.classList.add('show');
-    clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
 }
 
-function openSettings() {
-    if (running) { stopLoop(); renderTimer(); }
-    $('panel').classList.add('open');
-}
-function closeSettings() {
-    editingIndex = -1; renderList();
-    $('panel').classList.remove('open');
-}
-
-/* ===== ルーティーン切り替え ===== */
-function fmtJa(sec) {
-    sec = Math.max(0, Math.round(sec));
-    const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
-    return (h ? `${h}時間` : '') + (m ? `${m}分` : '') + (s || !(h || m) ? `${s}秒` : '');
-}
-const SVG_MORE = '<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg>';
-
+/* ================= ルーティーン一覧 ================= */
 function renderRoutinePage() {
     const box = $('routine-list'); box.innerHTML = '';
     $('page-sub').textContent = `マイルーティーン (${state.routines.length})`;
     state.routines.forEach(r => {
-        const card = document.createElement('div');
-        card.className = 'rc' + (r.id === state.activeId ? ' active' : '');
-
-        const top = document.createElement('div'); top.className = 'rc-top';
-        const title = document.createElement('div'); title.className = 'rc-title';
-        const name = document.createElement('span'); name.className = 'rc-name'; name.textContent = r.name || '(無題)';
-        const time = document.createElement('span'); time.className = 'rc-time';
-        time.textContent = `- ${fmtJa(routineTotalSec(r))}`;
-        title.append(name, time);
-        const more = document.createElement('button');
-        more.className = 'rc-more'; more.setAttribute('aria-label', 'メニュー'); more.innerHTML = SVG_MORE;
+        const card = el('div', 'rc' + (r.id === state.activeId ? ' active' : ''));
+        const top = el('div', 'rc-top');
+        const title = el('div', 'rc-title');
+        title.append(el('span', 'rc-name', r.name || '(無題)'), el('span', 'rc-time', `- ${fmtJa(routineTotalSec(r))}`));
+        const more = el('button', 'rc-more');
+        more.setAttribute('aria-label', 'メニュー'); more.innerHTML = SVG_MORE;
         more.onclick = () => openActions(r.id);
         top.append(title, more);
-
-        const prev = document.createElement('p'); prev.className = 'rc-preview';
-        prev.textContent = r.items.length ? r.items.map(s => s.name).join('、') : '種目がありません';
-
-        const start = document.createElement('button');
-        start.className = 'rc-start'; start.textContent = '開始'; start.disabled = !r.items.length;
+        const prev = el('p', 'rc-preview', r.items.length ? r.items.map(s => s.name).join('、') : '種目がありません');
+        const start = el('button', 'rc-start', '開始');
+        start.disabled = !r.items.length;
         start.onclick = () => startRoutine(r.id);
-
         card.append(top, prev, start);
         box.appendChild(card);
     });
 }
-const openPage = () => { if (running) { stopLoop(); renderTimer(); } renderRoutinePage(); $('routines-page').classList.add('open'); };
+const openPage = () => { renderRoutinePage(); $('routines-page').classList.add('open'); };
 const closePage = () => $('routines-page').classList.remove('open');
 
-function activate(id) {
-    state.activeId = id; save(); editingIndex = -1;
-    resetTimer(); rebuild(); renderAll();
-}
 function startRoutine(id) {
-    activate(id); closePage(); $('panel').classList.remove('open');
-    toggle();
+    activate(id); closePage(); startFromEditor();
 }
 function newRoutine() {
-    const r = { id: uid(), name: `ルーティーン ${state.routines.length + 1}`, wait: 5, items: [] };
+    const r = { id: uid(), name: `ルーティーン ${state.routines.length + 1}`, items: [] };
     state.routines.push(r); activate(r.id);
-    closePage(); openSettings();
-    setTimeout(() => { $('set-routine-name').focus(); $('set-routine-name').select(); }, 50);
+    closePage(); showView('editor');
+    setTimeout(() => { $('set-routine-name').focus(); $('set-routine-name').select(); }, 60);
 }
 function duplicateRoutine(r) {
-    const copy = { id: uid(), name: (r.name + ' のコピー').slice(0, 30), wait: r.wait, items: r.items.map(s => ({ ...s })) };
+    const copy = { id: uid(), name: (r.name + ' のコピー').slice(0, 30), items: r.items.map(s => ({ ...s })) };
     state.routines.splice(state.routines.indexOf(r) + 1, 0, copy); save();
     return copy;
 }
@@ -869,20 +1004,19 @@ function deleteRoutine(id) {
     const i = state.routines.findIndex(r => r.id === id);
     const wasActive = id === state.activeId;
     state.routines.splice(i, 1);
-    if (wasActive) { state.activeId = state.routines[Math.max(0, i - 1)].id; editingIndex = -1; resetTimer(); }
+    if (wasActive) { state.activeId = state.routines[Math.max(0, i - 1)].id; resetTimer(); }
     save(); rebuild(); renderAll();
 }
 
-/* ===== 三点メニュー ===== */
+/* ===== ルーティーンの三点メニュー ===== */
 let actionId = null, actDelArmed = false;
 function setActDelArmed(on) {
     actDelArmed = on;
-    const b = $('act-del');
-    b.querySelector('span').textContent = on ? 'もう一度タップで削除' : '削除';
+    $('act-del').querySelector('span').textContent = on ? 'もう一度タップで削除' : '削除';
 }
 function openActions(id) {
-    actionId = id;
     const r = state.routines.find(x => x.id === id); if (!r) return;
+    actionId = id;
     $('act-title').textContent = r.name || '(無題)';
     $('act-del').disabled = state.routines.length <= 1;
     setActDelArmed(false);
@@ -903,7 +1037,7 @@ function dec(str) {
     return JSON.parse(new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0))));
 }
 function shareCode(r) {
-    return enc({ v: 1, n: r.name, w: r.wait, i: r.items.map(s => [s.name, s.time, s.type]) });
+    return enc({ v: 2, n: r.name, i: r.items.map(s => [s.name, s.time, s.type, s.rest]) });
 }
 function parseShared(text) {
     try {
@@ -914,19 +1048,23 @@ function parseShared(text) {
         if (!text) return null;
         const o = dec(text);
         if (!o || !Array.isArray(o.i)) return null;
-        const items = o.i.map(a => ({
-            name: String(a[0] || '').slice(0, 40),
-            time: Math.min(3600, Math.max(1, parseInt(a[1]) || 30)),
-            type: a[2] === 'single' ? 'single' : 'both'
-        })).filter(s => s.name).slice(0, 100);
+        const oldWait = parseInt(o.w);   // 旧形式: ルーティーン共通の休憩
+        const items = o.i.map(a => {
+            const rest = a[3] !== undefined ? parseInt(a[3]) : oldWait;
+            return {
+                name: String(a[0] || '').slice(0, 40),
+                time: clamp(parseInt(a[1]) || 30, LIMITS.time[0], LIMITS.time[1]),
+                type: a[2] === 'single' ? 'single' : 'both',
+                rest: clamp(isNaN(rest) ? 5 : rest, LIMITS.rest[0], LIMITS.rest[1])
+            };
+        }).filter(s => s.name).slice(0, 100);
         if (!items.length) return null;
-        const w = parseInt(o.w);
-        return { id: uid(), name: String(o.n || '共有ルーティーン').slice(0, 30), wait: isNaN(w) ? 5 : Math.min(60, Math.max(0, w)), items };
+        return { id: uid(), name: String(o.n || '共有ルーティーン').slice(0, 30), items };
     } catch (e) { return null; }
 }
 async function copyText(text, okMsg) {
     try { await navigator.clipboard.writeText(text); toast(okMsg); return; } catch (e) {}
-    const ta = $('share-code'); ta.focus(); ta.select();
+    const ta = $('share-code'); ta.value = text; ta.focus(); ta.select();
     try { document.execCommand('copy'); toast(okMsg); } catch (e) { toast('コピーできませんでした'); }
 }
 let shareTarget = null;
@@ -957,19 +1095,35 @@ function updateImportPreview() {
 }
 
 /* ================= イベント登録 ================= */
+$('ed-start').onclick = startFromEditor;
+$('open-list').onclick = openPage;
+$('back-btn').onclick = backToEditor;
 $('main-btn').onclick = toggle;
 $('prev-btn').onclick = prev;
 $('skip-btn').onclick = skip;
-$('open-settings').onclick = openSettings;
-$('close-settings').onclick = closeSettings;
-$('routine-chip').onclick = openPage;
+$('add-open').onclick = () => openItemSheet(-1);
+
+$('set-routine-name').oninput = e => { cur().name = e.target.value.slice(0, 30); save(); renderTimer(); renderRoutinePage(); };
+
+$('item-cancel').onclick = () => closeSheet('sheet-item');
+$('item-save').onclick = saveItem;
+$('item-form').onkeydown = e => {
+    if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
+        e.preventDefault();
+        if (!isCoarse()) saveItem(); else e.target.blur();
+    }
+};
+$('picker-cancel').onclick = () => closeSheet('sheet-picker');
+$('picker-ok').onclick = commitPicker;
+
+$('ia-edit').onclick = () => { closeSheet('sheet-item-actions'); openItemSheet(iaIdx); };
+$('ia-up').onclick = () => { closeSheet('sheet-item-actions'); moveTo(iaIdx, iaIdx - 1); };
+$('ia-down').onclick = () => { closeSheet('sheet-item-actions'); moveTo(iaIdx, iaIdx + 1); };
+$('ia-del').onclick = () => { closeSheet('sheet-item-actions'); mutate(() => cur().items.splice(iaIdx, 1)); toast('削除しました'); };
+
 $('close-page').onclick = closePage;
 $('page-new').onclick = newRoutine;
 $('page-import').onclick = () => openImport('');
-$('btn-new').onclick = newRoutine;
-$('btn-switch').onclick = openPage;
-$('btn-import').onclick = () => openImport('');
-$('btn-share').onclick = () => openShare(cur());
 
 $('act-share').onclick = () => { const r = actionRoutine(); closeSheet('sheet-actions'); if (r) openShare(r); };
 $('act-dup').onclick = () => {
@@ -978,13 +1132,14 @@ $('act-dup').onclick = () => {
 };
 $('act-edit').onclick = () => {
     const id = actionId; closeSheet('sheet-actions');
-    if (id) { activate(id); closePage(); openSettings(); }
+    if (id) { activate(id); closePage(); showView('editor'); }
 };
 $('act-del').onclick = () => {
     if (!actDelArmed) { setActDelArmed(true); return; }
     const id = actionId; closeSheet('sheet-actions');
     deleteRoutine(id); toast('削除しました');
 };
+
 $('copy-code').onclick = () => copyText($('share-code').value, 'コードをコピーしました');
 $('copy-link').onclick = () => copyText(shareLink(), 'リンクをコピーしました');
 $('native-share').onclick = async () => {
@@ -996,69 +1151,15 @@ $('native-share').onclick = async () => {
 $('import-text').oninput = updateImportPreview;
 $('import-go').onclick = () => {
     if (!pendingImport) return;
-    state.routines.push(pendingImport); state.activeId = pendingImport.id; save();
-    editingIndex = -1; resetTimer(); rebuild(); renderAll();
+    state.routines.push(pendingImport); save();
+    activate(pendingImport.id);
     closeSheet('sheet-import-box'); toast('取り込みました');
 };
-
-$('btn-dup').onclick = () => { activate(duplicateRoutine(cur()).id); toast('複製しました'); };
-let delArmed = false, delTimer;
-$('btn-del').onclick = () => {
-    const b = $('btn-del');
-    if (!delArmed) {
-        delArmed = true; b.textContent = 'もう一度で削除'; b.classList.add('armed');
-        delTimer = setTimeout(disarm, 3000); return;
-    }
-    disarm();
-    deleteRoutine(state.activeId); toast('削除しました');
-};
-function disarm() {
-    delArmed = false; clearTimeout(delTimer);
-    const b = $('btn-del'); b.textContent = '削除'; b.classList.remove('armed');
-}
-
-$('set-routine-name').oninput = e => {
-    cur().name = e.target.value.slice(0, 30); save(); renderChip();
-};
-$('wait-sec-input').oninput = e => {
-    const v = parseInt(e.target.value) || 0;
-    cur().wait = v; $('wait-val-display').textContent = v; save();
-    if (phase !== 'idle') resetTimer();
-    renderTimer();
-};
-
-// 追加フォーム: 秒数 (チップ + ステッパー)
-let selectedSeconds = 30;
-const CHIPS = [15, 30, 45, 60];
-function setSeconds(v) {
-    selectedSeconds = Math.min(3600, Math.max(1, parseInt(v) || 1));
-    $('dur-input').value = selectedSeconds;
-    $('dur-chips').querySelectorAll('button').forEach(b => b.classList.toggle('on', parseInt(b.dataset.s) === selectedSeconds));
-}
-CHIPS.forEach(s => {
-    const b = document.createElement('button');
-    b.textContent = s + '秒'; b.dataset.s = s; b.onclick = () => setSeconds(s);
-    $('dur-chips').appendChild(b);
-});
-$('dur-minus').onclick = () => setSeconds(selectedSeconds - 5);
-$('dur-plus').onclick = () => setSeconds(selectedSeconds + 5);
-$('dur-input').oninput = e => { selectedSeconds = parseInt(e.target.value) || selectedSeconds; $('dur-chips').querySelectorAll('button').forEach(b => b.classList.toggle('on', parseInt(b.dataset.s) === selectedSeconds)); };
-$('dur-input').onchange = () => setSeconds($('dur-input').value);
-setSeconds(30);
-
-$('add-btn').onclick = () => {
-    const name = $('new-name').value.trim();
-    if (!name) { $('new-name').focus(); return; }
-    setSeconds($('dur-input').value);
-    editingIndex = -1;
-    mutate(() => cur().items.push({ name, time: selectedSeconds, type: $('side-type').value }));
-    $('new-name').value = '';
-};
-$('new-name').onkeydown = e => { if (e.key === 'Enter') $('add-btn').click(); };
 
 /* ================= 起動 ================= */
 rebuild();
 renderAll();
+showView('editor');
 if (location.hash.startsWith('#r=')) {
     const h = location.hash;
     try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
